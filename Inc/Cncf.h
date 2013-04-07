@@ -4,7 +4,7 @@
 
 #include "cncy.h"
 #ifdef STAND_ALONE
-// #include "CValue.h"
+#include "CValue.h"
 #else
 
 // Definitions for extensions
@@ -26,7 +26,7 @@ typedef struct CValue {
 	{
 		long m_long;
 		double m_double;
-		LPSTR m_pString;
+		LPTSTR m_pString;
 	};
 #ifdef __cplusplus
 };
@@ -55,6 +55,9 @@ class CRunFrame;
 class CRunMvt;
 class CMvt;
 class CDemoRecord;
+class CIPhoneJoystick;
+class CIPhoneAd;
+
 //class CValue;
 #else
 #define headerObject VOID
@@ -70,6 +73,8 @@ class CDemoRecord;
 #define CRunMvt void
 #define CMvt void
 #define CDemoRecord void
+#define CIPhoneJoystick void
+#define CIPhoneAd void
 #endif
 
 // Number of values
@@ -84,7 +89,7 @@ typedef short HFII;
 
 // LOGFONT 16 structure for compatibility with old extensions
 /////////////////////////////////////////////////////////////
-typedef struct tagLOGFONTV1 {
+typedef struct tagLOGFONTV1A {
 	short	lfHeight;
 	short	lfWidth;
 	short	lfEscapement;
@@ -98,8 +103,29 @@ typedef struct tagLOGFONTV1 {
 	BYTE	lfClipPrecision;
 	BYTE	lfQuality;
 	BYTE	lfPitchAndFamily;
-	BYTE	lfFaceName[LF_FACESIZE];
-} LOGFONTV1;
+	char	lfFaceName[LF_FACESIZE];
+} LOGFONTV1A;
+typedef struct tagLOGFONTV1W {
+	short	lfHeight;
+	short	lfWidth;
+	short	lfEscapement;
+	short	lfOrientation;
+	short	lfWeight;
+	BYTE	lfItalic;
+	BYTE	lfUnderline;
+	BYTE	lfStrikeOut;
+	BYTE	lfCharSet;
+	BYTE	lfOutPrecision;
+	BYTE	lfClipPrecision;
+	BYTE	lfQuality;
+	BYTE	lfPitchAndFamily;
+	WCHAR	lfFaceName[LF_FACESIZE];
+} LOGFONTV1W;
+#ifdef _UNICODE
+#define LOGFONTV1 LOGFONTV1W
+#else
+#define LOGFONTV1 LOGFONTV1A
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -158,13 +184,22 @@ typedef struct
 } OCValues;
 typedef	OCValues*			LPOCVALUES;
 
+#ifdef _UNICODE
+typedef struct
+{
+	WORD	number;
+	TCHAR	str[1];
+} OCStringsW;
+typedef	OCStringsW*			LPOCSTRINGS;
+#else
 typedef struct
 {
 	WORD	number;
 	char	str[2];
+} OCStringsA;
+typedef	OCStringsA*			LPOCSTRINGS;
+#endif
 
-} OCStrings;
-typedef	OCStrings*			LPOCSTRINGS;
 
 
 typedef struct
@@ -186,25 +221,6 @@ typedef	OCValueNames*		LPOCVALUENAMES;
 #define	OCFLAGS2_OBSTACLE_LADDER	0x0030
 #define	OCFLAGS2_AUTOMATICROTATION	0x0040
 
-
-//////////////////////////////////////////////////////////////////////////////
-//
-// Values
-//
-#define		MAX_VALUES			1024
-#define		VALUENAME_LENGTH	20
-typedef struct tabVAL {
-	long	vValue;
-	char	vName[VALUENAME_LENGTH];
-	} oValue;
-typedef struct tagVALUES {
-	short	vaSize;
-	DWORD	vaFlags;			// Flags of the object
-	oValue	vaValues[3];		// valurs
-	char	vaString[2];		// Character string
-	} objectValues;
-typedef	objectValues *		fpValues;
-
 //////////////////////////////////////////////////////////////////////////////
 //
 // Counter
@@ -215,8 +231,8 @@ typedef	struct	tagCT {
 	long	ctMini;				// Minimal value
 	long	ctMaxi;				// Maximal value
 } counter;
-typedef counter	*      fpct;
-typedef counter	*      fpCounter;
+typedef counter	*	  fpct;
+typedef counter	*	  fpCounter;
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -536,20 +552,20 @@ typedef	event	*	LPEVT;
 #define	ACT_SIZE					14
 
 // Definition of conditions / actions flags
-#define		EVFLAGS_REPEAT			0x01
-#define		EVFLAGS_DONE			0x02
-#define		EVFLAGS_DEFAULT			0x04
-#define		EVFLAGS_DONEBEFOREFADEIN 0x08
-#define		EVFLAGS_NOTDONEINSTART	0x10
-#define		EVFLAGS_ALWAYS			0x20
-#define		EVFLAGS_BAD				0x40
-#define		EVFLAGS_BADOBJECT		0x80
-#define		EVFLAGS_DEFAULTMASK		(EVFLAGS_ALWAYS+EVFLAGS_REPEAT+EVFLAGS_DEFAULT+EVFLAGS_DONEBEFOREFADEIN+EVFLAGS_NOTDONEINSTART)
-#define		ACTFLAGS_REPEAT			0x0001
+#define		EVFLAGS_REPEAT				0x01
+#define		EVFLAGS_DONE				0x02
+#define		EVFLAGS_DEFAULT				0x04
+#define		EVFLAGS_DONEBEFOREFADEIN	0x08
+#define		EVFLAGS_NOTDONEINSTART		0x10
+#define		EVFLAGS_ALWAYS				0x20
+#define		EVFLAGS_BAD					0x40
+#define		EVFLAGS_BADOBJECT			0x80
+#define		EVFLAGS_DEFAULTMASK			(EVFLAGS_ALWAYS+EVFLAGS_REPEAT+EVFLAGS_DEFAULT+EVFLAGS_DONEBEFOREFADEIN+EVFLAGS_NOTDONEINSTART)
+#define		ACTFLAGS_REPEAT				0x0001
 
 
 // For flags II
-// -------------                    
+// -------------					
 #define		EVFLAG2_NOT			0x0001
 #define		EVFLAG2_NOTABLE		0x0002
 #define		EVFLAGS_NOTABLE		(EVFLAG2_NOTABLE<<8)
@@ -559,7 +575,7 @@ typedef	event	*	LPEVT;
 #define		EVFLAG2_MASK		(EVFLAG2_NOT|EVFLAG2_NOTABLE|EVFLAGS_MONITORABLE)
 
 // MACRO: Returns the code for an extension
-#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)           
+#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)		   
 #define		EXTACTIONNUM(i)			((short)(i>>16))
 
 // PARAM Structure
@@ -618,7 +634,7 @@ typedef	eventParam	*			fpevp;
 #define		EXPL_PLUS				0x00020000
 #define		EXPL_MOINS				0x00040000
 #define		EXPL_MULT				0x00060000
-#define		EXPL_DIV				0x00080000                                         
+#define		EXPL_DIV				0x00080000										 
 #define		EXPL_MOD				0x000A0000
 #define		EXPL_POW				0x000C0000
 #define		EXPL_AND				0x000E0000
@@ -747,7 +763,7 @@ typedef	expressionV1 *			LPEXPV1;
 
 // Information structure
 // ----------------------------------------------
-typedef struct tagEVO {                                  
+typedef struct tagEVO {								  
 	short		evoConditions;	  	// Conditions
 	short		evoActions;			// Actions
 	short		evoExpressions;		// Expressions
@@ -764,7 +780,7 @@ typedef	eventInfosOffsets *		LPEVO;
 // ----------------------------------------------------------
 #define		TYPE_DIRECTION			-127
 #define		TYPE_QUALIFIER			-126
-#define		NUMBEROF_SYSTEMTYPES    7
+#define		NUMBEROF_SYSTEMTYPES	7
 #define		OBJ_PLAYER				-7
 #define		OBJ_KEYBOARD			-6
 #define		OBJ_CREATE				-5
@@ -818,6 +834,7 @@ typedef	eventInfosOffsets *		LPEVO;
 #define		OEPREFS_INKEFFECTS				0x0100
 #define		OEPREFS_TRANSITIONS				0x0200
 #define		OEPREFS_FINECOLLISIONS			0x0400
+#define		OEPREFS_APPLETPROBLEMS			0x0800
 
 // Running flags
 #define		REFLAG_ONESHOT				0x0001
@@ -1042,6 +1059,14 @@ typedef	eventInfosOffsets *		LPEVO;
 #define EXP_GETCLIPBOARD	((55<<8)|255)
 #define	EXP_TEMPPATH		((56<<8)|255)
 #define EXP_BINFILETEMPNAME	((57<<8)|255)
+#define	EXP_FLOATSTR		((58<<8)|255)
+#define	EXPL_FLOATSTR		((58<<16)|65535)
+#define	EXP_ATAN2			((59<<8)|255)
+#define	EXPL_ATAN2			((59<<16)|65535)
+#define	EXP_ZERO			((60<<8)|255)
+#define	EXPL_ZERO			((60<<16)|65535)
+#define	EXP_EMPTY			((61<<8)|255)
+#define	EXPL_EMPTY			((61<<16)|65535)
 
 #define	EXP_PARENTH1		((-1<<8)|255)
 #define	EXPL_PARENTH1		((-1<<16)|65535)
@@ -1054,62 +1079,95 @@ typedef	eventInfosOffsets *		LPEVO;
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // #define		TYPE_SPEAKER	  		-2
 //(TYPE_SPEAKER&255)=254
-#define CND_SPCHANNELPAUSED ((-9<<8)|254)
-#define CND_NOSPCHANNELPLAYING ((-8<<8)|254)
-#define	CND_MUSPAUSED		((-7<<8)|254)
-#define	CND_SPSAMPAUSED		((-6<<8)|254)
-#define	CND_MUSICENDS		((-5<<8)|254)
-#define	CNDL_MUSICENDS		((-5<<16)|65534)
-#define	CND_NOMUSPLAYING	((-4<<8)|254)
-#define	CNDL_NOMUSPLAYING	((-4<<16)|65534)
-#define	CND_NOSAMPLAYING	((-3<<8)|254)
-#define	CND_NOSPMUSPLAYING	((-2<<8)|254)
-#define	CND_NOSPSAMPLAYING	((-1<<8)|254)
-#define	ACT_PLAYSAMPLE		((0<<8)|254)
-#define	ACT_STOPSAMPLE		((1<<8)|254)
-#define	ACT_PLAYMUSIC		((2<<8)|254)
-#define	ACTL_PLAYMUSIC		((2<<16)|65534)
-#define	ACT_STOPMUSIC		((3<<8)|254)
-#define	ACTL_STOPMUSIC		((3<<16)|65534)
-#define	ACT_PLAYLOOPSAMPLE 	((4<<8)|254)
-#define	ACT_PLAYLOOPMUSIC 	((5<<8)|254)
-#define	ACT_STOPSPESAMPLE	((6<<8)|254)
-#define	ACT_PAUSESAMPLE		((7<<8)|254)
-#define	ACT_RESUMESAMPLE	((8<<8)|254)
-#define	ACT_PAUSEMUSIC		((9<<8)|254)
-#define	ACT_RESUMEMUSIC		((10<<8)|254)
-#define	ACT_PLAYCHANNEL		((11<<8)|254)
-#define	ACT_PLAYLOOPCHANNEL	((12<<8)|254)
-#define	ACT_PAUSECHANNEL	((13<<8)|254)
-#define	ACT_RESUMECHANNEL	((14<<8)|254)
-#define	ACT_STOPCHANNEL		((15<<8)|254)
-#define	ACT_SETCHANNELPOS	((16<<8)|254)
-#define	ACT_SETCHANNELVOL	((17<<8)|254)
-#define	ACT_SETCHANNELPAN	((18<<8)|254)
-#define	ACT_SETSAMPLEPOS	((19<<8)|254)
-#define	ACT_SETSAMPLEMAINVOL	((20<<8)|254)
-#define	ACT_SETSAMPLEVOL		((21<<8)|254)
-#define	ACT_SETSAMPLEMALNPAN	((22<<8)|254)
-#define	ACT_SETSAMPLEPAN		((23<<8)|254)
-#define ACT_PAUSEALLCHANNELS	((24<<8)|254)
-#define ACT_RESUMEALLCHANNELS	((25<<8)|254)
-#define ACT_PLAYMUSICFILE		((26<<8)|254)
-#define ACT_PLAYLOOPMUSICFILE	((27<<8)|254)
-#define ACT_PLAYFILECHANNEL		((28<<8)|254)
-#define ACT_PLAYLOOPFILECHANNEL	((29<<8)|254)
-#define ACT_LOCKCHANNEL			((30<<8)|254)
-#define ACT_UNLOCKCHANNEL		((31<<8)|254)
-#define ACT_SETCHANNELFREQ		((32<<8)|254)
-#define ACT_SETSAMPLEFREQ		((33<<8)|254)
+#define CND_SPCHANNELPAUSED			((-9<<8)|254)
+#define CNDL_SPCHANNELPAUSED		((-9<<16)|65534)
+#define CND_NOSPCHANNELPLAYING		((-8<<8)|254)
+#define CNDL_NOSPCHANNELPLAYING		((-8<<16)|65534)
+#define	CND_MUSPAUSED				((-7<<8)|254)
+#define	CND_SPSAMPAUSED				((-6<<8)|254)
+#define	CNDL_SPSAMPAUSED			((-6<<16)|65534)
+#define	CND_MUSICENDS				((-5<<8)|254)
+#define	CNDL_MUSICENDS				((-5<<16)|65534)
+#define	CND_NOMUSPLAYING			((-4<<8)|254)
+#define	CNDL_NOMUSPLAYING			((-4<<16)|65534)
+#define	CND_NOSAMPLAYING			((-3<<8)|254)
+#define	CNDL_NOSAMPLAYING			((-3<<16)|65534)
+#define	CND_NOSPMUSPLAYING			((-2<<8)|254)
+#define	CND_NOSPSAMPLAYING			((-1<<8)|254)
+#define	CNDL_NOSPSAMPLAYING			((-1<<16)|65534)
+#define	ACT_PLAYSAMPLE				((0<<8)|254)
+#define	ACTL_PLAYSAMPLE				((0<<16)|65534)
+#define	ACT_STOPSAMPLE				((1<<8)|254)
+#define	ACTL_STOPSAMPLE				((1<<16)|65534)
+#define	ACT_PLAYMUSIC				((2<<8)|254)
+#define	ACTL_PLAYMUSIC				((2<<16)|65534)
+#define	ACT_STOPMUSIC				((3<<8)|254)
+#define	ACTL_STOPMUSIC				((3<<16)|65534)
+#define	ACT_PLAYLOOPSAMPLE 			((4<<8)|254)
+#define	ACTL_PLAYLOOPSAMPLE			((4<<16)|65534)
+#define	ACT_PLAYLOOPMUSIC 			((5<<8)|254)
+#define	ACT_STOPSPESAMPLE			((6<<8)|254)
+#define	ACTL_STOPSPESAMPLE			((6<<16)|65534)
+#define	ACT_PAUSESAMPLE				((7<<8)|254)
+#define	ACTL_PAUSESAMPLE			((7<<16)|65534)
+#define	ACT_RESUMESAMPLE			((8<<8)|254)
+#define	ACTL_RESUMESAMPLE			((8<<16)|65534)
+#define	ACT_PAUSEMUSIC				((9<<8)|254)
+#define	ACT_RESUMEMUSIC				((10<<8)|254)
+#define	ACT_PLAYCHANNEL				((11<<8)|254)
+#define	ACTL_PLAYCHANNEL			((11<<16)|65534)
+#define	ACT_PLAYLOOPCHANNEL			((12<<8)|254)
+#define	ACTL_PLAYLOOPCHANNEL		((12<<16)|65534)
+#define	ACT_PAUSECHANNEL			((13<<8)|254)
+#define	ACTL_PAUSECHANNEL			((13<<16)|65534)
+#define	ACT_RESUMECHANNEL			((14<<8)|254)
+#define	ACTL_RESUMECHANNEL			((14<<16)|65534)
+#define	ACT_STOPCHANNEL				((15<<8)|254)
+#define	ACTL_STOPCHANNEL			((15<<16)|65534)
+#define	ACT_SETCHANNELPOS			((16<<8)|254)
+#define	ACTL_SETCHANNELPOS			((16<<16)|65534)
+#define	ACT_SETCHANNELVOL			((17<<8)|254)
+#define	ACTL_SETCHANNELVOL			((17<<16)|65534)
+#define	ACT_SETCHANNELPAN			((18<<8)|254)
+#define	ACTL_SETCHANNELPAN			((18<<16)|65534)
+#define	ACT_SETSAMPLEPOS			((19<<8)|254)
+#define	ACTL_SETSAMPLEPOS			((19<<16)|65534)
+#define	ACT_SETSAMPLEMAINVOL		((20<<8)|254)
+#define	ACTL_SETSAMPLEMAINVOL		((20<<16)|65534)
+#define	ACT_SETSAMPLEVOL			((21<<8)|254)
+#define	ACTL_SETSAMPLEVOL			((21<<16)|65534)
+#define	ACT_SETSAMPLEMALNPAN		((22<<8)|254)
+#define	ACTL_SETSAMPLEMALNPAN		((22<<16)|65534)
+#define	ACT_SETSAMPLEPAN			((23<<8)|254)
+#define	ACTL_SETSAMPLEPAN			((23<<16)|65534)
+#define ACT_PAUSEALLCHANNELS		((24<<8)|254)
+#define ACTL_PAUSEALLCHANNELS		((24<<16)|65534)
+#define ACT_RESUMEALLCHANNELS		((25<<8)|254)
+#define ACTL_RESUMEALLCHANNELS		((25<<16)|65534)
+#define ACT_PLAYMUSICFILE			((26<<8)|254)
+#define ACT_PLAYLOOPMUSICFILE		((27<<8)|254)
+#define ACT_PLAYFILECHANNEL			((28<<8)|254)
+#define	ACTL_PLAYFILECHANNEL		((28<<16)|65534)
+#define ACT_PLAYLOOPFILECHANNEL		((29<<8)|254)
+#define ACTL_PLAYLOOPFILECHANNEL	((29<<16)|65534)
+#define ACT_LOCKCHANNEL				((30<<8)|254)
+#define ACTL_LOCKCHANNEL			((30<<16)|65534)
+#define ACT_UNLOCKCHANNEL			((31<<8)|254)
+#define ACTL_UNLOCKCHANNEL			((31<<16)|65534)
+#define ACT_SETCHANNELFREQ			((32<<8)|254)
+#define ACT_SETSAMPLEFREQ			((33<<8)|254)
 
 #define	EXP_GETSAMPLEMAINVOL	((0<<8)|254)
 #define	EXP_GETSAMPLEVOL		((1<<8)|254)
 #define	EXP_GETCHANNELVOL		((2<<8)|254)
+#define	EXPL_GETCHANNELVOL		((2<<16)|65534)
 #define	EXP_GETSAMPLEMAINPAN	((3<<8)|254)
 #define	EXP_GETSAMPLEPAN		((4<<8)|254)
 #define	EXP_GETCHANNELPAN		((5<<8)|254)
+#define	EXPL_GETCHANNELPAN		((5<<16)|65534)
 #define	EXP_GETSAMPLEPOS		((6<<8)|254)
 #define	EXP_GETCHANNELPOS		((7<<8)|254)
+#define	EXPL_GETCHANNELPOS		((7<<16)|65534)
 #define	EXP_GETSAMPLEDUR		((8<<8)|254)
 #define	EXP_GETCHANNELDUR		((9<<8)|254)
 #define	EXP_GETSAMPLEFREQ		((10<<8)|254)
@@ -1121,94 +1179,106 @@ typedef	eventInfosOffsets *		LPEVO;
 //#define		TYPE_GAME		  		-3
 //(TYPE_GAME&255)=253
 
-#define CND_FRAMELOADED		((-9<<8)|253)
-#define	CNDL_ENDOFPAUSE		((-8<<16)|65533)
-#define CND_ENDOFPAUSE		((-8<<8)|253)
-#define CND_ISVSYNCON		((-7<<8)|253)
-#define	CND_ISLADDER		((-6<<8)|253)
-#define	CND_ISOBSTACLE		((-5<<8)|253)
-#define	CND_QUITAPPLICATION	((-4<<8)|253)
+#define CND_FRAMESAVED			((-10<<8)|253)
+#define CND_FRAMELOADED			((-9<<8)|253)
+#define	CNDL_ENDOFPAUSE			((-8<<16)|65533)
+#define CND_ENDOFPAUSE			((-8<<8)|253)
+#define CND_ISVSYNCON			((-7<<8)|253)
+#define	CND_ISLADDER			((-6<<8)|253)
+#define	CND_ISOBSTACLE			((-5<<8)|253)
+#define	CND_QUITAPPLICATION		((-4<<8)|253)
 #define	CNDL_QUITAPPLICATION	((-4<<16)|65533)
-#define	CND_LEVEL			((-3<<8)|253)
-#define	CND_END				((-2<<8)|253)
-#define	CNDL_END			((-2<<16)|65533)
-#define	CND_START			((-1<<8)|253)
-#define	CNDL_START			((-1<<16)|65533)
+#define	CND_LEVEL				((-3<<8)|253)
+#define	CND_END					((-2<<8)|253)
+#define	CNDL_END				((-2<<16)|65533)
+#define	CND_START				((-1<<8)|253)
+#define	CNDL_START				((-1<<16)|65533)
 
-#define	ACT_NEXTLEVEL       ((0<<8)|253)
-#define	ACTL_NEXTLEVEL       ((0<<16)|65533)
-#define	ACT_PREVLEVEL       ((1<<8)|253)
-#define	ACTL_PREVLEVEL       ((1<<16)|65533)
-#define	ACT_GOLEVEL     	((2<<8)|253)
-#define	ACTL_GOLEVEL     	((2<<16)|65533)
-#define	ACT_PAUSE           ((3<<8)|253)
-#define	ACT_ENDGAME         ((4<<8)|253)
-#define	ACTL_ENDGAME         ((4<<16)|65533)
-#define	ACT_RESTARTGAME     ((5<<8)|253)
-#define	ACTL_RESTARTGAME     ((5<<16)|65533)
-#define	ACT_RESTARTLEVEL    ((6<<8)|253)
-#define	ACT_CDISPLAY	    ((7<<8)|253)
-#define	ACT_CDISPLAYX	    ((8<<8)|253)
-#define	ACT_CDISPLAYY	    ((9<<8)|253)
-#define	ACT_LOADGAME		((10<<8)|253)
-#define	ACT_SAVEGAME		((11<<8)|253)
-#define ACT_CLS				((12<<8)|253)
-#define	ACT_CLEARZONE		((13<<8)|253)
-#define ACT_FULLSCREENMODE	((14<<8)|253)
-#define ACT_WINDOWEDMODE	((15<<8)|253)
-#define ACT_SETFRAMERATE	((16<<8)|253)
-#define ACT_PAUSEKEY		((17<<8)|253)
-#define ACT_PAUSEANYKEY		((18<<8)|253)
-#define	ACT_SETVSYNCON		((19<<8)|253)
-#define	ACT_SETVSYNCOFF		((20<<8)|253)
-#define	ACT_SETVIRTUALWIDTH	((21<<8)|253)
-#define	ACT_SETVIRTUALHEIGHT ((22<<8)|253)
-#define ACT_SETFRAMEBDKCOLOR ((23<<8)|253)
-#define ACT_DELCREATEDBKDAT ((24<<8)|253)
-#define ACT_DELALLCREATEDBKD ((25<<8)|253)
-#define ACT_SETFRAMEWIDTH	((26<<8)|253)
-#define ACT_SETFRAMEHEIGHT	((27<<8)|253)
-#define ACT_SAVEFRAME		((28<<8)|253)
-#define ACT_LOADFRAME		((29<<8)|253)
-#define ACT_LOADAPPLICATION	((30<<8)|253)
-#define ACT_PLAYDEMO		((31<<8)|253)
+#define	ACT_NEXTLEVEL					((0<<8)|253)
+#define	ACTL_NEXTLEVEL					((0<<16)|65533)
+#define	ACT_PREVLEVEL					((1<<8)|253)
+#define	ACTL_PREVLEVEL					((1<<16)|65533)
+#define	ACT_GOLEVEL						((2<<8)|253)
+#define	ACTL_GOLEVEL					((2<<16)|65533)
+#define	ACT_PAUSE						((3<<8)|253)
+#define	ACT_ENDGAME						((4<<8)|253)
+#define	ACTL_ENDGAME					((4<<16)|65533)
+#define	ACT_RESTARTGAME					((5<<8)|253)
+#define	ACTL_RESTARTGAME				((5<<16)|65533)
+#define	ACT_RESTARTLEVEL				((6<<8)|253)
+#define	ACT_CDISPLAY					((7<<8)|253)
+#define	ACT_CDISPLAYX					((8<<8)|253)
+#define	ACT_CDISPLAYY					((9<<8)|253)
+#define	ACT_LOADGAME					((10<<8)|253)
+#define	ACT_SAVEGAME					((11<<8)|253)
+#define ACT_CLS							((12<<8)|253)
+#define	ACT_CLEARZONE					((13<<8)|253)
+#define ACT_FULLSCREENMODE				((14<<8)|253)
+#define ACT_WINDOWEDMODE				((15<<8)|253)
+#define ACT_SETFRAMERATE				((16<<8)|253)
+#define ACT_PAUSEKEY					((17<<8)|253)
+#define ACT_PAUSEANYKEY					((18<<8)|253)
+#define	ACT_SETVSYNCON					((19<<8)|253)
+#define	ACT_SETVSYNCOFF					((20<<8)|253)
+#define	ACT_SETVIRTUALWIDTH				((21<<8)|253)
+#define	ACT_SETVIRTUALHEIGHT			((22<<8)|253)
+#define ACT_SETFRAMEBDKCOLOR			((23<<8)|253)
+#define ACT_DELCREATEDBKDAT				((24<<8)|253)
+#define ACT_DELALLCREATEDBKD			((25<<8)|253)
+#define ACT_SETFRAMEWIDTH				((26<<8)|253)
+#define ACT_SETFRAMEHEIGHT				((27<<8)|253)
+#define ACT_SAVEFRAME					((28<<8)|253)
+#define ACT_LOADFRAME					((29<<8)|253)
+#define ACT_LOADAPPLICATION				((30<<8)|253)
+#define ACT_PLAYDEMO					((31<<8)|253)
+#define ACT_SETFRAMEEFFECT				((32<<8)|253)
+#define ACT_SETFRAMEEFFECTPARAM			((33<<8)|253)
+#define ACT_SETFRAMEEFFECTPARAMTEXTURE	((34<<8)|253)
+#define ACT_SETFRAMEALPHACOEF			((35<<8)|253)
+#define ACT_SETFRAMERGBCOEF				((36<<8)|253)
 
-#define	EXP_GAMLEVEL		((0<<8)|253)
-#define	EXP_GAMNPLAYER		((1<<8)|253)
-#define	EXP_PLAYXLEFT		((2<<8)|253)
-#define	EXP_PLAYXRIGHT		((3<<8)|253)
-#define	EXP_PLAYYTOP		((4<<8)|253)
-#define	EXP_PLAYYBOTTOM		((5<<8)|253)
-#define	EXP_PLAYWIDTH		((6<<8)|253)
-#define	EXP_PLAYHEIGHT		((7<<8)|253)
-#define	EXP_GAMLEVELNEW		((8<<8)|253)
-#define	EXP_GETCOLLISIONMASK ((9<<8)|253)
-#define EXP_FRAMERATE		((10<<8)|253)
-#define EXP_GETVIRTUALWIDTH	((11<<8)|253)
-#define EXP_GETVIRTUALHEIGHT ((12<<8)|253)
-#define EXP_GETFRAMEBKDCOLOR ((13<<8)|253)
+#define	EXP_GAMLEVEL			((0<<8)|253)
+#define	EXP_GAMNPLAYER			((1<<8)|253)
+#define	EXP_PLAYXLEFT			((2<<8)|253)
+#define	EXP_PLAYXRIGHT			((3<<8)|253)
+#define	EXP_PLAYYTOP			((4<<8)|253)
+#define	EXP_PLAYYBOTTOM			((5<<8)|253)
+#define	EXP_PLAYWIDTH			((6<<8)|253)
+#define	EXP_PLAYHEIGHT			((7<<8)|253)
+#define	EXP_GAMLEVELNEW			((8<<8)|253)
+#define	EXP_GETCOLLISIONMASK	((9<<8)|253)
+#define EXP_FRAMERATE			((10<<8)|253)
+#define EXP_GETVIRTUALWIDTH		((11<<8)|253)
+#define EXP_GETVIRTUALHEIGHT	((12<<8)|253)
+#define EXP_GETFRAMEBKDCOLOR	((13<<8)|253)
+#define	EXP_GRAPHICMODE			((14<<8)|253)
+#define	EXP_PIXELSHADERVERSION	((15<<8)|253)
+#define EXP_FRAMEALPHACOEF		((16<<8)|253)
+#define EXP_FRAMERGBCOEF		((17<<8)|253)
+#define EXP_FRAMEEFFECTPARAM	((18<<8)|253)
+
 
 // TIMER Conditions / Actions 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#define	CND_TIMEOUT       	((-5<<8)|(OBJ_TIMER&255))
-#define	CND_EVERY       	((-4<<8)|(OBJ_TIMER&255))
-#define	CNDL_EVERY       	((-4<<16)|(OBJ_TIMER&0xFFFF))
-#define	CND_TIMER       	((-3<<8)|(OBJ_TIMER&255))
-#define	CNDL_TIMER       	((-3<<16)|(OBJ_TIMER&0xFFFF))
-#define	CND_TIMERINF       	((-2<<8)|(OBJ_TIMER&255))
-#define	CNDL_TIMERINF      	((-2<<16)|(OBJ_TIMER&0xFFFF))
-#define	CND_TIMERSUP       	((-1<<8)|(OBJ_TIMER&255))
-#define	CNDL_TIMERSUP      	((-1<<16)|(OBJ_TIMER&0xFFFF))
-#define	ACT_SETTIMER        ((0<<8)|(OBJ_TIMER&255))
+#define	CND_TIMEOUT			((-5<<8)|(OBJ_TIMER&255))
+#define	CND_EVERY			((-4<<8)|(OBJ_TIMER&255))
+#define	CNDL_EVERY			((-4<<16)|(OBJ_TIMER&0xFFFF))
+#define	CND_TIMER			((-3<<8)|(OBJ_TIMER&255))
+#define	CNDL_TIMER			((-3<<16)|(OBJ_TIMER&0xFFFF))
+#define	CND_TIMERINF	   	((-2<<8)|(OBJ_TIMER&255))
+#define	CNDL_TIMERINF	  	((-2<<16)|(OBJ_TIMER&0xFFFF))
+#define	CND_TIMERSUP	   	((-1<<8)|(OBJ_TIMER&255))
+#define	CNDL_TIMERSUP	  	((-1<<16)|(OBJ_TIMER&0xFFFF))
+#define	ACT_SETTIMER		((0<<8)|(OBJ_TIMER&255))
 #define	EXP_TIMVALUE		((0<<8)|(OBJ_TIMER&255))
 #define	EXP_TIMCENT			((1<<8)|(OBJ_TIMER&255))
 #define	EXP_TIMSECONDS		((2<<8)|(OBJ_TIMER&255))
 #define	EXP_TIMHOURS		((3<<8)|(OBJ_TIMER&255))
 #define	EXP_TIMMINITS		((4<<8)|(OBJ_TIMER&255))
-#define	NUM_EVERY       	-4
-#define	NUM_TIMER       	-3
-#define	NUM_TIMERINF       	-2
-#define	NUM_TIMERSUP       	-1
+#define	NUM_EVERY	   		-4
+#define	NUM_TIMER	   		-3
+#define	NUM_TIMERINF		-2
+#define	NUM_TIMERSUP		-1
 
 // KEYBOARD Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1216,27 +1286,27 @@ typedef	eventInfosOffsets *		LPEVO;
 #define	CND_ONMOUSEWHEELDOWN   	((-12<<8)|(OBJ_KEYBOARD&255))
 #define	CNDL_ONMOUSEWHEELUP  	((-11<<16)|(OBJ_KEYBOARD&0xFFFF))
 #define	CND_ONMOUSEWHEELUP   	((-11<<8)|(OBJ_KEYBOARD&255))
-#define	CND_MOUSEON		   	((-10<<8)|(OBJ_KEYBOARD&255))
-#define	CND_ANYKEY			((-9<<8)|(OBJ_KEYBOARD&255))
-#define	CNDL_ANYKEY			((-9<<16)|(OBJ_KEYBOARD&0xFFFF))
-#define	CND_MKEYDEPRESSED	((-8<<8)|(OBJ_KEYBOARD&255))
-#define	CND_MCLICKONOBJECT	((-7<<8)|(OBJ_KEYBOARD&255))
-#define	CNDL_MCLICKONOBJECT	((-7<<16)|(OBJ_KEYBOARD&0xFFFF))
-#define	CND_MCLICKINZONE 	((-6<<8)|(OBJ_KEYBOARD&255))
-#define	CNDL_MCLICKINZONE 	((-6<<16)|(OBJ_KEYBOARD&0xFFFF))
-#define	CND_MCLICK	 		((-5<<8)|(OBJ_KEYBOARD&255))
-#define	CNDL_MCLICK	 		((-5<<16)|(OBJ_KEYBOARD&0xFFFF))
-#define	CND_MONOBJECT		((-4<<8)|(OBJ_KEYBOARD&255))
-#define	CNDL_MONOBJECT		((-4<<16)|(OBJ_KEYBOARD&0xFFFF))
-#define	CND_MINZONE			((-3<<8)|(OBJ_KEYBOARD&255))
-#define	CND_KBKEYDEPRESSED 	((-2<<8)|(OBJ_KEYBOARD&255))
-#define	CND_KBPRESSKEY   	((-1<<8)|(OBJ_KEYBOARD&255))
-#define CNDL_KBPRESSKEY		((-1<<16)|(OBJ_KEYBOARD&0xFFFF))
-#define	ACT_HIDECURSOR		((0<<8)|(OBJ_KEYBOARD&255))
-#define	ACT_SHOWCURSOR		((1<<8)|(OBJ_KEYBOARD&255))
-#define	EXP_XMOUSE			((0<<8)|(OBJ_KEYBOARD&255))
-#define	EXP_YMOUSE			((1<<8)|(OBJ_KEYBOARD&255))
-#define	EXP_MOUSEWHEELDELTA	((2<<8)|(OBJ_KEYBOARD&255))
+#define	CND_MOUSEON		   		((-10<<8)|(OBJ_KEYBOARD&255))
+#define	CND_ANYKEY				((-9<<8)|(OBJ_KEYBOARD&255))
+#define	CNDL_ANYKEY				((-9<<16)|(OBJ_KEYBOARD&0xFFFF))
+#define	CND_MKEYDEPRESSED		((-8<<8)|(OBJ_KEYBOARD&255))
+#define	CND_MCLICKONOBJECT		((-7<<8)|(OBJ_KEYBOARD&255))
+#define	CNDL_MCLICKONOBJECT		((-7<<16)|(OBJ_KEYBOARD&0xFFFF))
+#define	CND_MCLICKINZONE 		((-6<<8)|(OBJ_KEYBOARD&255))
+#define	CNDL_MCLICKINZONE 		((-6<<16)|(OBJ_KEYBOARD&0xFFFF))
+#define	CND_MCLICK	 			((-5<<8)|(OBJ_KEYBOARD&255))
+#define	CNDL_MCLICK	 			((-5<<16)|(OBJ_KEYBOARD&0xFFFF))
+#define	CND_MONOBJECT			((-4<<8)|(OBJ_KEYBOARD&255))
+#define	CNDL_MONOBJECT			((-4<<16)|(OBJ_KEYBOARD&0xFFFF))
+#define	CND_MINZONE				((-3<<8)|(OBJ_KEYBOARD&255))
+#define	CND_KBKEYDEPRESSED 		((-2<<8)|(OBJ_KEYBOARD&255))
+#define	CND_KBPRESSKEY   		((-1<<8)|(OBJ_KEYBOARD&255))
+#define CNDL_KBPRESSKEY			((-1<<16)|(OBJ_KEYBOARD&0xFFFF))
+#define	ACT_HIDECURSOR			((0<<8)|(OBJ_KEYBOARD&255))
+#define	ACT_SHOWCURSOR			((1<<8)|(OBJ_KEYBOARD&255))
+#define	EXP_XMOUSE				((0<<8)|(OBJ_KEYBOARD&255))
+#define	EXP_YMOUSE				((1<<8)|(OBJ_KEYBOARD&255))
+#define	EXP_MOUSEWHEELDELTA		((2<<8)|(OBJ_KEYBOARD&255))
 
 
 // PLAYERS Conditions / Actions 
@@ -1246,20 +1316,20 @@ typedef	eventInfosOffsets *		LPEVO;
 #define	CNDL_NOMORELIVE		((-5<<16)|(OBJ_PLAYER&0xFFFF))
 #define	CND_JOYPRESSED		((-4<<8)|(OBJ_PLAYER&255))
 #define	CNDL_JOYPRESSED		((-4<<16)|(OBJ_PLAYER&0xFFFF))
-#define	CND_LIVE	        ((-3<<8)|(OBJ_PLAYER&255))
-#define	CND_SCORE		    ((-2<<8)|(OBJ_PLAYER&255))
+#define	CND_LIVE			((-3<<8)|(OBJ_PLAYER&255))
+#define	CND_SCORE			((-2<<8)|(OBJ_PLAYER&255))
 #define	CND_PLAYERPLAYING   ((-1<<8)|(OBJ_PLAYER&255))
 
 #define	ACT_SETSCORE	  	((0<<8)|(OBJ_PLAYER&255))
-#define	ACT_SETLIVES      	((1<<8)|(OBJ_PLAYER&255))
-#define	ACT_NOINPUT      	((2<<8)|(OBJ_PLAYER&255))
-#define	ACT_RESTINPUT      	((3<<8)|(OBJ_PLAYER&255))
+#define	ACT_SETLIVES	  	((1<<8)|(OBJ_PLAYER&255))
+#define	ACT_NOINPUT	  		((2<<8)|(OBJ_PLAYER&255))
+#define	ACT_RESTINPUT	  	((3<<8)|(OBJ_PLAYER&255))
 #define	ACT_ADDSCORE	  	((4<<8)|(OBJ_PLAYER&255))
-#define	ACT_ADDLIVES      	((5<<8)|(OBJ_PLAYER&255))
+#define	ACT_ADDLIVES	  	((5<<8)|(OBJ_PLAYER&255))
 #define	ACT_SUBSCORE	  	((6<<8)|(OBJ_PLAYER&255))
-#define	ACT_SUBLIVES      	((7<<8)|(OBJ_PLAYER&255))
+#define	ACT_SUBLIVES	  	((7<<8)|(OBJ_PLAYER&255))
 #define	ACT_SETINPUT	  	((8<<8)|(OBJ_PLAYER&255))
-#define	ACT_SETINPUTKEY    	((9<<8)|(OBJ_PLAYER&255))
+#define	ACT_SETINPUTKEY		((9<<8)|(OBJ_PLAYER&255))
 #define	ACT_SETPLAYERNAME	((10<<8)|(OBJ_PLAYER&255))
 
 #define	EXP_PLASCORE		((0<<8)|(OBJ_PLAYER&255))
@@ -1271,35 +1341,35 @@ typedef	eventInfosOffsets *		LPEVO;
 
 // CREATE Conditions / Actions 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#define	CND_CHOOSEALLINLINE	((-23<<8)|(OBJ_CREATE&255))
-#define	CND_CHOOSEFLAGRESET	((-22<<8)|(OBJ_CREATE&255))
-#define	CND_CHOOSEFLAGSET 	((-21<<8)|(OBJ_CREATE&255))
-#define	CND_CHOOSEVALUE 	((-20<<8)|(OBJ_CREATE&255))
-#define	CND_PICKFROMID		((-19<<8)|(OBJ_CREATE&255))
-#define	CND_CHOOSEALLINZONE ((-18<<8)|(OBJ_CREATE&255))
-#define	CND_CHOOSEALL       ((-17<<8)|(OBJ_CREATE&255))
-#define	CND_CHOOSEZONE      ((-16<<8)|(OBJ_CREATE&255))
-#define	CND_NUMOFALLOBJECT  ((-15<<8)|(OBJ_CREATE&255))
-#define	CND_NUMOFALLZONE    ((-14<<8)|(OBJ_CREATE&255))
-#define	CND_NOMOREALLZONE   ((-13<<8)|(OBJ_CREATE&255))
+#define	CND_CHOOSEALLINLINE		((-23<<8)|(OBJ_CREATE&255))
+#define	CND_CHOOSEFLAGRESET		((-22<<8)|(OBJ_CREATE&255))
+#define	CND_CHOOSEFLAGSET 		((-21<<8)|(OBJ_CREATE&255))
+#define	CND_CHOOSEVALUE 		((-20<<8)|(OBJ_CREATE&255))
+#define	CND_PICKFROMID			((-19<<8)|(OBJ_CREATE&255))
+#define	CND_CHOOSEALLINZONE		((-18<<8)|(OBJ_CREATE&255))
+#define	CND_CHOOSEALL			((-17<<8)|(OBJ_CREATE&255))
+#define	CND_CHOOSEZONE			((-16<<8)|(OBJ_CREATE&255))
+#define	CND_NUMOFALLOBJECT		((-15<<8)|(OBJ_CREATE&255))
+#define	CND_NUMOFALLZONE		((-14<<8)|(OBJ_CREATE&255))
+#define	CND_NOMOREALLZONE		((-13<<8)|(OBJ_CREATE&255))
 #define	CND_CHOOSEFLAGRESET_OLD	((-12<<8)|(OBJ_CREATE&255))
 #define	CND_CHOOSEFLAGSET_OLD 	((-11<<8)|(OBJ_CREATE&255))
 //...
 #define	CND_CHOOSEVALUE_OLD 	((-8<<8)|(OBJ_CREATE&255))
 #define	CND_PICKFROMID_OLD		((-7<<8)|(OBJ_CREATE&255))
 #define	CND_CHOOSEALLINZONE_OLD ((-6<<8)|(OBJ_CREATE&255))
-#define	CND_CHOOSEALL_OLD       ((-5<<8)|(OBJ_CREATE&255))
-#define	CND_CHOOSEZONE_OLD      ((-4<<8)|(OBJ_CREATE&255))
+#define	CND_CHOOSEALL_OLD		((-5<<8)|(OBJ_CREATE&255))
+#define	CND_CHOOSEZONE_OLD		((-4<<8)|(OBJ_CREATE&255))
 #define	CND_NUMOFALLOBJECT_OLD  ((-3<<8)|(OBJ_CREATE&255))
-#define	CND_NUMOFALLZONE_OLD    ((-2<<8)|(OBJ_CREATE&255))
+#define	CND_NUMOFALLZONE_OLD	((-2<<8)|(OBJ_CREATE&255))
 #define	CND_NOMOREALLZONE_OLD   ((-1<<8)|(OBJ_CREATE&255))
 #define	ACT_CREATE				((0<<8)|(OBJ_CREATE&255))
 #define	EXP_CRENUMBERALL		((0<<8)|(OBJ_CREATE&255))
-#define	NUM_END				-2
-#define	NUM_START			-1
+#define	NUM_END					-2
+#define	NUM_START				-1
 
 #endif
-           
+		   
 // BALL Movements
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 typedef struct	tagMB {
@@ -1315,7 +1385,7 @@ typedef	MoveBall * LPMOVEBALL;
 // MOUSE movement
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 typedef struct	tagMM {
-	short		mmDx;      				
+	short		mmDx;	  				
 	short		mmFx;
 	short		mmDy;
 	short		mmFy;
@@ -1379,9 +1449,28 @@ typedef struct tagMD {
 	short	mdSinus;
 	short	mdLength;
 	short	mdPause;
-	char	mdName[2];
+	TCHAR	mdName[2];
 	} MoveDef;
 typedef	MoveDef	* LPMOVEDEF;
+
+// Movement edition
+typedef struct tagME {
+	int		meSpeed;
+	int		meDx;
+	int		meDy;
+	int		meFlag;
+	int		meX;
+	int		meY;
+	int		meDelay;
+	LPTSTR	meName;
+	} MoveEdit;
+typedef	MoveEdit * LPMOVEEDIT;
+
+typedef struct tagMA {
+	MoveEdit	me[1];
+	}MoveArray;
+#define	sizeof_MoveArray		(sizeof(MoveArray)-sizeof(MoveEdit))
+typedef	MoveArray * LPMOVEARRAY;
 
 typedef struct tagMT {
 	WORD	mtNumber;				// Number of movement 
@@ -1394,32 +1483,6 @@ typedef struct tagMT {
 	BYTE	mtMoves[2];				// Start of movement definition
 	} MoveTaped;
 typedef	MoveTaped	* LPMOVETAPED;
-
-// Movement edition
-typedef struct tagME {
-	int		meSpeed;
-	int		meDx;
-	int		meDy;
-	int		meFlag;
-	int		meX;
-	int		meY;
-	int		meDelay;
-	char	*meName;
-	} MoveEdit;
-typedef	MoveEdit * LPMOVEEDIT;
-
-typedef struct tagMA {
-	MoveEdit	me[1];
-	}MoveArray;
-#define	sizeof_MoveArray		(sizeof(MoveArray)-sizeof(MoveEdit))
-typedef	MoveArray * LPMOVEARRAY;
-
-// Bloc movement structure
-typedef struct tagMBLOC {
-	short		pbNMoves;
-	short		pbData[2];
-	} PathBloc;
-typedef PathBloc  *  LPPATHBLOC;
 
 // PLATFORM mouvement 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1461,11 +1524,13 @@ typedef struct MovementTable
 } MovementTable;
 typedef MovementTable * LPMVTTABLE;
 
+#define MVTOPT_8DIR_STICK	0x01	// Stick to obstacles (build 249, 8-direction mvt), allows the user to choose between behavior of b247 (avoid obstacles) and b248 (stick to obstacles)
+
 typedef struct 	tagMV {
 	WORD	mvControl;				// Who controls the object
 	WORD	mvType;					// Type of movement
 	BYTE	mvMove;					// Move at start?
-	BYTE	mvFree0;
+	BYTE	mvOpt;					// Options
 	BYTE	mvFree1;
 	BYTE	mvFree2;
 	DWORD	mvDirAtStart;
@@ -1482,7 +1547,7 @@ typedef struct 	tagMV {
 typedef	Movement	*	LPMOVEMENT;
 
 #ifndef IN_KPX
-           
+		   
 // COMMON CONDITIONS FOR NORMAL OBJECTS
 //////////////////////////////////////////
 #define	EVENTS_EXTBASE				80
@@ -1508,119 +1573,125 @@ typedef	Movement	*	LPMOVEMENT;
 #define	CND_EXTCMPVARFIXED			(-26<<8)
 #define	CND_EXTFLAGSET				(-25<<8)
 #define	CND_EXTFLAGRESET			(-24<<8)
-#define	CND_EXTISCOLBACK	        (-23<<8)
-#define	CND_EXTNEARBORDERS	        (-22<<8)
-#define	CND_EXTENDPATH	  	        (-21<<8)
-#define	CNDL_EXTENDPATH	  	        (-21<<16)
-#define	CND_EXTPATHNODE    	        (-20<<8)
-#define	CNDL_EXTPATHNODE    	    (-20<<16)
-#define	CND_EXTCMPACC	            (-19<<8)
-#define	CND_EXTCMPDEC	 	        (-18<<8)
-#define	CND_EXTCMPX	 	  	        (-17<<8)
-#define	CND_EXTCMPY   		        (-16<<8)
-#define	CND_EXTCMPSPEED             (-15<<8)
-#define	CND_EXTCOLLISION   	        (-14<<8)
-#define	CNDL_EXTCOLLISION   	    (-14<<16)
-#define	CND_EXTCOLBACK              (-13<<8)
-#define	CNDL_EXTCOLBACK             (-13<<16)
-#define	CND_EXTOUTPLAYFIELD         (-12<<8)
-#define	CNDL_EXTOUTPLAYFIELD        (-12<<16)
-#define	CND_EXTINPLAYFIELD          (-11<<8)
-#define	CNDL_EXTINPLAYFIELD         (-11<<16)
-#define	CND_EXTISOUT	            (-10<<8)
-#define	CNDL_EXTISOUT	            (-10<<16)
-#define	CND_EXTISIN                 (-9 <<8)
-#define	CNDL_EXTISIN                (-9 <<16)
-#define	CND_EXTFACING               (-8 <<8)
-#define	CND_EXTSTOPPED              (-7 <<8)
-#define	CND_EXTBOUNCING	            (-6 <<8)
-#define	CND_EXTREVERSED             (-5 <<8)
-#define	CND_EXTISCOLLIDING          (-4 <<8)
-#define	CNDL_EXTISCOLLIDING         (-4 <<16)
-#define	CND_EXTANIMPLAYING          (-3 <<8)
-#define	CND_EXTANIMENDOF        	(-2 <<8)
-#define	CNDL_EXTANIMENDOF        	(-2 <<16)
-#define	CND_EXTCMPFRAME     		(-1 <<8)
+#define	CND_EXTISCOLBACK			(-23<<8)
+#define	CND_EXTNEARBORDERS			(-22<<8)
+#define	CND_EXTENDPATH	  			(-21<<8)
+#define	CNDL_EXTENDPATH	  			(-21<<16)
+#define	CND_EXTPATHNODE				(-20<<8)
+#define	CNDL_EXTPATHNODE			(-20<<16)
+#define	CND_EXTCMPACC				(-19<<8)
+#define	CND_EXTCMPDEC	 			(-18<<8)
+#define	CND_EXTCMPX	 	  			(-17<<8)
+#define	CND_EXTCMPY   				(-16<<8)
+#define	CND_EXTCMPSPEED				(-15<<8)
+#define	CND_EXTCOLLISION   			(-14<<8)
+#define	CNDL_EXTCOLLISION   		(-14<<16)
+#define	CND_EXTCOLBACK				(-13<<8)
+#define	CNDL_EXTCOLBACK				(-13<<16)
+#define	CND_EXTOUTPLAYFIELD			(-12<<8)
+#define	CNDL_EXTOUTPLAYFIELD		(-12<<16)
+#define	CND_EXTINPLAYFIELD			(-11<<8)
+#define	CNDL_EXTINPLAYFIELD			(-11<<16)
+#define	CND_EXTISOUT				(-10<<8)
+#define	CNDL_EXTISOUT				(-10<<16)
+#define	CND_EXTISIN					(-9 <<8)
+#define	CNDL_EXTISIN				(-9 <<16)
+#define	CND_EXTFACING				(-8 <<8)
+#define	CND_EXTSTOPPED				(-7 <<8)
+#define	CND_EXTBOUNCING				(-6 <<8)
+#define	CND_EXTREVERSED				(-5 <<8)
+#define	CND_EXTISCOLLIDING			(-4 <<8)
+#define	CNDL_EXTISCOLLIDING			(-4 <<16)
+#define	CND_EXTANIMPLAYING			(-3 <<8)
+#define	CND_EXTANIMENDOF			(-2 <<8)
+#define	CNDL_EXTANIMENDOF			(-2 <<16)
+#define	CND_EXTCMPFRAME	 			(-1 <<8)
 
-#define	ACT_EXTSETPOS		        (1 <<8)
-#define	ACT_EXTSETX			        (2 <<8)
-#define	ACT_EXTSETY			        (3 <<8)
-#define	ACT_EXTSTOP			        (4 <<8)
-#define	ACTL_EXTSTOP		        (4 <<16)
-#define	ACT_EXTSTART		        (5 <<8)
-#define	ACT_EXTSPEED		        (6 <<8)
-#define	ACT_EXTMAXSPEED		        (7 <<8)
-#define	ACT_EXTWRAP			        (8 <<8)
-#define	ACTL_EXTWRAP		        (8 <<16)
-#define	ACT_EXTBOUNCE		        (9 <<8)
-#define	ACTL_EXTBOUNCE		        (9 <<16)
-#define	ACT_EXTREVERSE		        (10<<8)
-#define	ACT_EXTNEXTMOVE		        (11<<8)
-#define	ACT_EXTPREVMOVE		        (12<<8)
-#define	ACT_EXTSELMOVE		        (13<<8)
-#define	ACT_EXTLOOKAT		        (14<<8)
-#define	ACT_EXTSTOPANIM		        (15<<8)
-#define	ACT_EXTSTARTANIM	        (16<<8)
-#define	ACT_EXTFORCEANIM	        (17<<8)
-#define	ACT_EXTFORCEDIR		        (18<<8)
-#define	ACT_EXTFORCESPEED	        (19<<8)
-#define	ACT_EXTRESTANIM		        (20<<8)         
-#define	ACT_EXTRESTDIR		        (21<<8)
-#define	ACT_EXTRESTSPEED	        (22<<8)
-#define	ACT_EXTSETDIR				(23<<8)
-#define	ACT_EXTDESTROY				(24<<8)
-#define	ACT_EXTSHUFFLE				(25<<8)
-#define	ACTL_EXTSHUFFLE				(25<<16)
-#define	ACT_EXTHIDE					(26<<8)
-#define	ACT_EXTSHOW					(27<<8)
-#define	ACT_EXTDISPLAYDURING		(28<<8)
-#define	ACT_EXTSHOOT				(29<<8)
-#define	ACTL_EXTSHOOT				(29<<16)
-#define	ACT_EXTSHOOTTOWARD			(30<<8)
-#define	ACTL_EXTSHOOTTOWARD			(30<<16)
-#define	ACT_EXTSETVAR				(31<<8)
-#define	ACTL_EXTSETVAR				(31<<16)
-#define	ACT_EXTADDVAR				(32<<8)
-#define	ACTL_EXTADDVAR				(32<<16)
-#define	ACT_EXTSUBVAR				(33<<8)
-#define	ACTL_EXTSUBVAR				(33<<16)
-#define	ACT_EXTDISPATCHVAR			(34<<8)
-#define	ACTL_EXTDISPATCHVAR			(34<<16)
-#define	ACT_EXTSETFLAG				(35<<8)
-#define	ACT_EXTCLRFLAG				(36<<8)
-#define	ACT_EXTCHGFLAG				(37<<8)
-#define	ACT_EXTINKEFFECT			(38<<8)
-#define ACT_EXTSETSEMITRANSPARENCY	(39<<8)
-#define ACT_EXTFORCEFRAME			(40<<8)
-#define ACT_EXTRESTFRAME			(41<<8)
-#define ACT_EXTSETACCELERATION		(42<<8)
-#define ACT_EXTSETDECELERATION		(43<<8)
-#define ACT_EXTSETROTATINGSPEED		(44<<8)
-#define ACT_EXTSETDIRECTIONS		(45<<8)
-#define ACT_EXTBRANCHNODE			(46<<8)
-#define ACT_EXTSETGRAVITY			(47<<8)
-#define ACT_EXTGOTONODE				(48<<8)
-#define	ACT_EXTSETVARSTRING			(49<<8)
-#define	ACTL_EXTSETVARSTRING		(49<<16)
-#define ACT_EXTSETFONTNAME			(50<<8)
-#define ACT_EXTSETFONTSIZE			(51<<8)
-#define ACT_EXTSETBOLD				(52<<8)
-#define ACT_EXTSETITALIC			(53<<8)
-#define ACT_EXTSETUNDERLINE			(54<<8)
-#define	ACT_EXTSETSRIKEOUT			(55<<8)
-#define	ACT_EXTSETTEXTCOLOR			(56<<8)
-#define ACT_EXTSPRFRONT				(57<<8)
-#define ACT_EXTSPRBACK				(58<<8)
-#define	ACT_EXTMOVEBEFORE			(59<<8)
-#define	ACT_EXTMOVEAFTER			(60<<8)
-#define ACT_EXTMOVETOLAYER			(61<<8)
-#define ACT_EXTADDTODEBUGGER		(62<<8)
+#define	ACT_EXTSETPOS					(1 <<8)
+#define	ACT_EXTSETX						(2 <<8)
+#define	ACT_EXTSETY						(3 <<8)
+#define	ACT_EXTSTOP						(4 <<8)
+#define	ACTL_EXTSTOP					(4 <<16)
+#define	ACT_EXTSTART					(5 <<8)
+#define	ACT_EXTSPEED					(6 <<8)
+#define	ACT_EXTMAXSPEED					(7 <<8)
+#define	ACT_EXTWRAP						(8 <<8)
+#define	ACTL_EXTWRAP					(8 <<16)
+#define	ACT_EXTBOUNCE					(9 <<8)
+#define	ACTL_EXTBOUNCE					(9 <<16)
+#define	ACT_EXTREVERSE					(10<<8)
+#define	ACT_EXTNEXTMOVE					(11<<8)
+#define	ACT_EXTPREVMOVE					(12<<8)
+#define	ACT_EXTSELMOVE					(13<<8)
+#define	ACT_EXTLOOKAT					(14<<8)
+#define	ACT_EXTSTOPANIM					(15<<8)
+#define	ACT_EXTSTARTANIM				(16<<8)
+#define	ACT_EXTFORCEANIM				(17<<8)
+#define	ACT_EXTFORCEDIR					(18<<8)
+#define	ACT_EXTFORCESPEED				(19<<8)
+#define	ACTL_EXTFORCESPEED				(19<<16)
+#define	ACT_EXTRESTANIM					(20<<8)		 
+#define	ACT_EXTRESTDIR					(21<<8)
+#define	ACT_EXTRESTSPEED				(22<<8)
+#define	ACT_EXTSETDIR					(23<<8)
+#define	ACT_EXTDESTROY					(24<<8)
+#define	ACT_EXTSHUFFLE					(25<<8)
+#define	ACTL_EXTSHUFFLE					(25<<16)
+#define	ACT_EXTHIDE						(26<<8)
+#define	ACT_EXTSHOW						(27<<8)
+#define	ACT_EXTDISPLAYDURING			(28<<8)
+#define	ACT_EXTSHOOT					(29<<8)
+#define	ACTL_EXTSHOOT					(29<<16)
+#define	ACT_EXTSHOOTTOWARD				(30<<8)
+#define	ACTL_EXTSHOOTTOWARD				(30<<16)
+#define	ACT_EXTSETVAR					(31<<8)
+#define	ACTL_EXTSETVAR					(31<<16)
+#define	ACT_EXTADDVAR					(32<<8)
+#define	ACTL_EXTADDVAR					(32<<16)
+#define	ACT_EXTSUBVAR					(33<<8)
+#define	ACTL_EXTSUBVAR					(33<<16)
+#define	ACT_EXTDISPATCHVAR				(34<<8)
+#define	ACTL_EXTDISPATCHVAR				(34<<16)
+#define	ACT_EXTSETFLAG					(35<<8)
+#define	ACT_EXTCLRFLAG					(36<<8)
+#define	ACT_EXTCHGFLAG					(37<<8)
+#define	ACT_EXTINKEFFECT				(38<<8)
+#define ACT_EXTSETSEMITRANSPARENCY		(39<<8)
+#define ACT_EXTFORCEFRAME				(40<<8)
+#define ACT_EXTRESTFRAME				(41<<8)
+#define ACT_EXTSETACCELERATION			(42<<8)
+#define ACT_EXTSETDECELERATION			(43<<8)
+#define ACT_EXTSETROTATINGSPEED			(44<<8)
+#define ACT_EXTSETDIRECTIONS			(45<<8)
+#define ACT_EXTBRANCHNODE				(46<<8)
+#define ACT_EXTSETGRAVITY				(47<<8)
+#define ACT_EXTGOTONODE					(48<<8)
+#define	ACT_EXTSETVARSTRING				(49<<8)
+#define	ACTL_EXTSETVARSTRING			(49<<16)
+#define ACT_EXTSETFONTNAME				(50<<8)
+#define ACT_EXTSETFONTSIZE				(51<<8)
+#define ACT_EXTSETBOLD					(52<<8)
+#define ACT_EXTSETITALIC				(53<<8)
+#define ACT_EXTSETUNDERLINE				(54<<8)
+#define	ACT_EXTSETSRIKEOUT				(55<<8)
+#define	ACT_EXTSETTEXTCOLOR				(56<<8)
+#define ACT_EXTSPRFRONT					(57<<8)
+#define ACT_EXTSPRBACK					(58<<8)
+#define	ACT_EXTMOVEBEFORE				(59<<8)
+#define	ACT_EXTMOVEAFTER				(60<<8)
+#define ACT_EXTMOVETOLAYER				(61<<8)
+#define ACT_EXTADDTODEBUGGER			(62<<8)
+#define ACT_EXTSETEFFECT				(63<<8)
+#define ACT_EXTSETEFFECTPARAM			(64<<8)
+#define ACT_EXTSETALPHACOEF				(65<<8)
+#define ACT_EXTSETRGBCOEF				(66<<8)
+#define ACT_EXTSETEFFECTPARAMTEXTURE	(67<<8)
 
-#define	EXP_EXTYSPR        		    ( 1<<8)
-#define	EXP_EXTISPR        		    ( 2<<8)
-#define	EXP_EXTSPEED       		    ( 3<<8)
-#define	EXP_EXTACC         		    ( 4<<8)
-#define	EXP_EXTDEC         		    ( 5<<8)
+#define	EXP_EXTYSPR					( 1<<8)
+#define	EXP_EXTISPR					( 2<<8)
+#define	EXP_EXTSPEED	   			( 3<<8)
+#define	EXP_EXTACC		 			( 4<<8)
+#define	EXP_EXTDEC		 			( 5<<8)
 #define	EXP_EXTDIR					( 6<<8)
 #define	EXP_EXTXLEFT				( 7<<8)
 #define	EXP_EXTXRIGHT				( 8<<8)
@@ -1644,13 +1715,18 @@ typedef	Movement	*	LPMOVEMENT;
 #define EXP_EXTGETGRAVITY			(24<<8)
 #define EXP_EXTXAP					(25<<8)
 #define EXP_EXTYAP					(26<<8)
+#define EXP_EXTALPHACOEF			(27<<8)
+#define EXP_EXTRGBCOEF				(28<<8)
+#define EXP_EXTEFFECTPARAM			(29<<8)
+#define EXP_EXTVARBYINDEX			(30<<8)
+#define EXP_EXTVARSTRINGBYINDEX		(31<<8)
 
 // TEXT Conditions / Actions 
 ////////////////////////////////////////////
 #define	ACT_STRDESTROY	  	 (( (EVENTS_EXTBASE+0)<<8)|3)
 #define	ACT_STRDISPLAY		 (( (EVENTS_EXTBASE+1)<<8)|3)
 #define	ACT_STRDISPLAYDURING (( (EVENTS_EXTBASE+2)<<8)|3)
-#define	ACT_STRSETCOLOUR     (( (EVENTS_EXTBASE+3)<<8)|3)
+#define	ACT_STRSETCOLOUR	 (( (EVENTS_EXTBASE+3)<<8)|3)
 #define	ACT_STRSET	   		 (( (EVENTS_EXTBASE+4)<<8)|3)
 #define	ACT_STRPREV	   		 (( (EVENTS_EXTBASE+5)<<8)|3)
 #define	ACT_STRNEXT	   		 (( (EVENTS_EXTBASE+6)<<8)|3)
@@ -1675,6 +1751,7 @@ typedef	Movement	*	LPMOVEMENT;
 #define ACT_SPRSETSCALEY	(((EVENTS_EXTBASE+7)<<8)|2)
 #define ACT_SPRSETANGLE		(((EVENTS_EXTBASE+8)<<8)|2)
 #define ACT_SPRLOADFRAME	(((EVENTS_EXTBASE+9)<<8)|2)
+#define ACTL_SPRLOADFRAME	(((EVENTS_EXTBASE+9)<<16)|2)
 #define EXP_GETRGBAT		(((EVENTS_EXTBASE+0)<<8)|2)
 #define EXP_GETSCALEX		(((EVENTS_EXTBASE+1)<<8)|2)
 #define EXP_GETSCALEY		(((EVENTS_EXTBASE+2)<<8)|2)
@@ -1700,11 +1777,11 @@ typedef	Movement	*	LPMOVEMENT;
 ///////////////////////////////////////////////
 #define	CND_QEQUAL			(((-EVENTS_EXTBASE-3)<<8)|4)
 #define	CNDL_QEQUAL			(((-EVENTS_EXTBASE-3)<<16)|4)
-#define	CND_QFALSE		    (((-EVENTS_EXTBASE-2)<<8)|4)
-#define	CNDL_QFALSE		    (((-EVENTS_EXTBASE-2)<<16)|4)
-#define	CND_QEXACT		    (((-EVENTS_EXTBASE-1)<<8)|4)
-#define	CNDL_QEXACT		    (((-EVENTS_EXTBASE-1)<<16)|4)
-#define	ACT_QASK		    (( (EVENTS_EXTBASE+0)<<8)|4)
+#define	CND_QFALSE			(((-EVENTS_EXTBASE-2)<<8)|4)
+#define	CNDL_QFALSE			(((-EVENTS_EXTBASE-2)<<16)|4)
+#define	CND_QEXACT			(((-EVENTS_EXTBASE-1)<<8)|4)
+#define	CNDL_QEXACT			(((-EVENTS_EXTBASE-1)<<16)|4)
+#define	ACT_QASK			(( (EVENTS_EXTBASE+0)<<8)|4)
 
 
 // Formatted text Conditions / actions / expressions 
@@ -1845,23 +1922,41 @@ typedef	Movement	*	LPMOVEMENT;
 #define		PS_INT					4
 
 // -------------------------------- Sample
-#define		MAX_SOUNDNAME				64
-#define		PSOUNDFLAG_UNINTERRUPTABLE	0x0001
-#define		PSOUNDFLAG_BAD				0x0002
+#define		MAX_SOUNDNAME					64
+#define		PSOUNDFLAG_UNINTERRUPTABLE		0x0001
+#define		PSOUNDFLAG_BAD					0x0002
+#define		PSOUNDFLAG_IPHONE_AUDIOPLAYER	0x0004
+#define		PSOUNDFLAG_IPHONE_OPENAL		0x0008
 
-typedef struct tagSSND {
+typedef struct tagSSNDA {
 	short	sndHandle;
 	short	sndFlags;
 	char	sndName[MAX_SOUNDNAME];
-	} SoundParam;
-typedef		SoundParam *		LPSND;
+	} SoundParamA;
+typedef struct tagSSNDW {
+	short	sndHandle;
+	short	sndFlags;
+	WCHAR	sndName[MAX_SOUNDNAME];
+	} SoundParamW;
+typedef		SoundParamA *		LPSNDA;
+typedef		SoundParamW *		LPSNDW;
 
 #define		PARAM_SAMPLE			6
-#define		PS_SAM					sizeof(SoundParam)
+#ifdef _UNICODE
+#define		PS_SAM					sizeof(SoundParamW)
+#define		LPSND LPSNDW
+#else
+#define		PS_SAM					sizeof(SoundParamA)
+#define		LPSND LPSNDA
+#endif
 
 // -------------------------------- Music
 #define		PARAM_MUSIC				7
-#define		PS_MUS					sizeof(SoundParam)
+#ifdef _UNICODE
+#define		PS_MUS					sizeof(SoundParamW)
+#else
+#define		PS_MUS					sizeof(SoundParamA)
+#endif
 
 
 // POSITION PARAM Structure 
@@ -1958,7 +2053,7 @@ typedef	ShootParam 	* 					LPSHT;
 // -------------------------------- Playfield Zone 
 #define		PARAM_ZONE				19
 #define		PS_ZNE					8
-                     
+					 
 // -------------------------------- System object position
 // W- Direction
 #define		PARAM_SYSCREATE		   	21
@@ -2013,15 +2108,31 @@ typedef	ShootParam 	* 					LPSHT;
 
 // -------------------------------- External program
 #define		PARAM_PROGRAM			33
-typedef struct tagPRG {
+typedef struct tagPRGA {
 	short	prgFlags;				// Default flags
 	char	prgPath[_MAX_PATH];		// Name of the program
 	char	prgCommand[108];		// Command line
-	} prgParam;
-typedef		prgParam *			LPPRG;	
+	} prgParamA;
+typedef		prgParamA *			LPPRGA;	
+typedef struct tagPRGW {
+	short	prgFlags;				// Default flags
+	WCHAR	prgPath[_MAX_PATH];		// Name of the program
+	WCHAR	prgCommand[108];		// Command line
+	} prgParamW;
+typedef		prgParamW *			LPPRGW;	
+#define PS_PRGA sizeof(prgParamA)
+#define PS_PRGW sizeof(prgParamW)
+#ifdef _UNICODE
+#define prgParam prgParamW
+#define PS_PRG sizeof(prgParamW)
+#define LPPRG LPPRGW
+#else
+#define prgParam prgParamA
+#define PS_PRG sizeof(prgParamA)
+#define LPPRG LPPRGA
+#endif
 
-#define		PS_PRG					sizeof(prgParam)
-#define		PRGFLAGS_WAIT			0x0001                                                    
+#define		PRGFLAGS_WAIT			0x0001													
 #define		PRGFLAGS_HIDE			0x0002
 
 // -------------------------------- Global variable number 
@@ -2042,41 +2153,74 @@ typedef		prgParam *			LPPRG;
 #define		PARAM_CNDMUSIC			36
 // -------------------------------- Event editor remark
 #define		PARAM_REMARK			37
-typedef struct tagREM {
-	LOGFONTV1	remLogFont;				// Font 
+typedef struct tagREMA {
+	LOGFONTV1A	remLogFont;				// Font 
 	COLORREF	remColorFont;			// Text color
 	COLORREF	remColorBack;			// Background color
 	short		remAlign;				// Alignement flags
 	WORD		remTextId;				// Text number in the buffer
 	char		remStyle[40];			// Style
-	} paramRemark;
-#define		PS_REM				sizeof(paramRemark)
-typedef		paramRemark *		LPRMK;	
+	} paramRemarkA;
+typedef		paramRemarkA*		LPRMKA;	
+typedef struct tagREMW {
+	LOGFONTV1W	remLogFont;				// Font 
+	COLORREF	remColorFont;			// Text color
+	COLORREF	remColorBack;			// Background color
+	short		remAlign;				// Alignement flags
+	WORD		remTextId;				// Text number in the buffer
+	WCHAR		remStyle[40];			// Style
+	} paramRemarkW;
+typedef		paramRemarkW*		LPRMKW;	
+#ifdef _UNICODE
+#define PS_REM sizeof(paramRemarkW)
+#define LPRMK LPRMKW
+#else
+#define PS_REM sizeof(paramRemarkA)
+#define LPRMK LPRMKA
+#endif
 
 // -------------------------------- Group title
 #define		PARAM_GROUP				38
 #define		GROUP_MAXTITLE			80
 #define		GROUP_MAXPASSWORD		16
-typedef struct tagGRP {
+typedef struct tagGRPW {
+	short		grpFlags;					// Active / Unactive?
+	short		grpId;						// Group identifier
+	WCHAR		grpTitle[GROUP_MAXTITLE];	// Title
+	WCHAR		grpPassword[GROUP_MAXPASSWORD];		// Protection 
+	DWORD		grpChecksum;				// Checksum
+	} paramGroupW;
+typedef paramGroupW* LPGRPW;
+typedef struct tagGRPA {
 	short		grpFlags;					// Active / Unactive?
 	short		grpId;						// Group identifier
 	char		grpTitle[GROUP_MAXTITLE];	// Title
 	char		grpPassword[GROUP_MAXPASSWORD];		// Protection 
 	DWORD		grpChecksum;				// Checksum
-	} paramGroup;
-#define		PS_GRP				sizeof(paramGroup)
+	} paramGroupA;
+typedef paramGroupA* LPGRPA;
 typedef struct tagOLDGRP {
 	short		grpFlags;					
 	short		grpId;					
 	char		grpTitle[GROUP_MAXTITLE];
-	} paramOldGroup;
-#define		PS_OLDGRP			sizeof(paramOldGroup)
-typedef		paramGroup *		LPGRP;	
+	} paramGroupV0;
+#define PS_GRPA sizeof(paramGroupA)
+#define PS_GRPW sizeof(paramGroupW)
+#ifdef _UNICODE
+#define PS_GRP sizeof(paramGroupW)
+#define LPGRP LPGRPW
+#define GETEVPGRP(evpPtr) (LPGRPW)&evpPtr->evpW.evpW0
+#else
+#define PS_GRP sizeof(paramGroupA)
+#define LPGRP LPGRPA
+#define GETEVPGRP(evpPtr) (LPGRPA)&evpPtr->evpW.evpW0
+#endif
 
 #define		GRPFLAGS_INACTIVE		0x0001
 #define		GRPFLAGS_CLOSED			0x0002
 #define		GRPFLAGS_PARENTINACTIVE	0x0004
 #define		GRPFLAGS_GROUPINACTIVE	0x0008
+#define		GRPFLAGS_UNICODE		0x0010
 //#define		GRPFLAGS_FADEIN			0x0004
 //#define		GRPFLAGS_FADEOUT		0x0008
 #define		GRPFLAGS_GLOBAL			0x0010
@@ -2179,14 +2323,25 @@ typedef struct
 
 // -------------------------------- Movement number
 #define MAX_MVTNAME					32
-typedef struct tagMvtParam {
+typedef struct tagMvtParamA {
 	short	mvtNumber;
 	char	mvtName[MAX_MVTNAME];
-	} MvtParam;
-typedef		MvtParam *			LPMVTP;
+	} MvtParamA;
+typedef		MvtParamA *			LPMVTPA;
+typedef struct tagMvtParamW {
+	short	mvtNumber;
+	WCHAR	mvtName[MAX_MVTNAME];
+	} MvtParamW;
+typedef		MvtParamW *			LPMVTPW;
 
 #define		PARAM_MVT			57
-#define		PS_MVT				sizeof(MvtParam)
+#ifdef _UNICODE
+#define		PS_MVT				sizeof(MvtParamW)
+#define		LPMVTP LPMVTPW
+#else
+#define		PS_MVT				sizeof(MvtParamA)
+#define		LPMVTP LPMVTPA
+#endif
 
 // Access to renamed variables
 #define		PARAM_STRINGGLOBAL		58
@@ -2208,18 +2363,23 @@ typedef		prgParam2 *			LPPRG2;
 #define		PARAM_ALTSTRING_EXP		62
 #define		PS_ALTSTRING_EXP	 	PS_EXP
 
-// -------------------------------- A pointner to a filename, version 2
+// -------------------------------- A pointer to a filename, version 2
 #define		PARAM_FILENAME2			63
 #define		PS_FILEN				_MAX_PATH
 // B nom de fichier...
+
+// -------------------------------- The name of an effect
+#define		PARAM_EFFECT			64
+#define		PS_EFFECT				2
+// B name of the effect
 
 
 // STRUCTURE FOR FAST LOOPS
 ///////////////////////////////////////////////////////////////////////
 typedef struct tagFL
 {
-	LPSTR	next;
-	char	name[64];
+	LPTSTR	next;
+	TCHAR	name[64];
 	WORD	flags;
 	long	index;
 } FastLoop;
@@ -2412,7 +2572,21 @@ typedef struct
 	int value;
 	LPSTR pText;
 	int lText;
-} EditDebugInfo;
+} EditDebugInfoA;
+
+typedef struct
+{
+	LPWSTR pTitle;
+	int value;
+	LPWSTR pText;
+	int lText;
+} EditDebugInfoW;
+
+#ifdef _UNICODE
+#define EditDebugInfo EditDebugInfoW
+#else
+#define EditDebugInfo EditDebugInfoA
+#endif
 
 ///////////////////////////////////////////////////////////////////////
 //
@@ -2443,7 +2617,7 @@ typedef	objectsList *			LPOBL;
 #define		OBJECT_SIZE			256L
 #define		OBJECT_SHIFT		8
 #define		MAX_INTERMEDIATERESULTS		256
-#define		MAX_TEMPSTRINGS				256
+#define		STEP_TEMPSTRINGS	64
 
 typedef struct tagRH2 {
 	DWORD		rh2OldPlayer;				// Previous player entries
@@ -2483,7 +2657,7 @@ typedef struct tagRH2 {
 	int		  	rh2PauseCompteur;
 	DWORD		rh2PauseTimer;
 	UINT	  	rh2PauseVbl;
-	FARPROC	   	rh2LoopTraceProc;       	// Debugging routine
+	FARPROC	   	rh2LoopTraceProc;			// Debugging routine
 	FARPROC	   	rh2EventTraceProc;
 
 	} runHeader2;
@@ -2571,12 +2745,13 @@ typedef struct tagKPXLIB {
 #define RFUNCTION_EDITTEXT					21
 #define RFUNCTION_CALLMOVEMENT				22
 #define RFUNCTION_SETPOSITION				23
+#define RFUNCTION_GETCALLTABLES				24
 
-#define CNC_GetParameter(rdPtr)							callRunTimeFunction(rdPtr, RFUNCTION_GETPARAM, 0xFFFFFFFF, 0)
-#define CNC_GetIntParameter(rdPtr)						callRunTimeFunction(rdPtr, RFUNCTION_GETPARAM, 0, 0)
-#define CNC_GetStringParameter(rdPtr)					callRunTimeFunction(rdPtr, RFUNCTION_GETPARAM, 0xFFFFFFFF, 0)
-#define CNC_GetFloatParameter(rdPtr)					callRunTimeFunction(rdPtr, RFUNCTION_GETPARAM, 2, 0)
-#define CNC_GetFloatValue(rdPtr, par)					callRunTimeFunction(rdPtr, RFUNCTION_GETPARAMFLOAT, par, 0)
+#define CNC_GetParameter(rdPtr)									callRunTimeFunction(rdPtr, RFUNCTION_GETPARAM, 0xFFFFFFFF, 0)
+#define CNC_GetIntParameter(rdPtr)								callRunTimeFunction(rdPtr, RFUNCTION_GETPARAM, 0, 0)
+#define CNC_GetStringParameter(rdPtr)							callRunTimeFunction(rdPtr, RFUNCTION_GETPARAM, 0xFFFFFFFF, 0)
+#define CNC_GetFloatParameter(rdPtr)							callRunTimeFunction(rdPtr, RFUNCTION_GETPARAM, 2, 0)
+#define CNC_GetFloatValue(rdPtr, par)							callRunTimeFunction(rdPtr, RFUNCTION_GETPARAMFLOAT, par, 0)
 #define CNC_GetFirstExpressionParameter(rdPtr, lParam, wParam)	callRunTimeFunction(rdPtr, RFUNCTION_GETPARAM1, wParam, lParam)
 #define CNC_GetNextExpressionParameter(rdPtr, lParam, wParam)	callRunTimeFunction(rdPtr, RFUNCTION_GETPARAM2, wParam, lParam)
 
@@ -2635,21 +2810,26 @@ typedef struct tagRH4 {
 	DWORD		rh4SaveVersion;
 	event*		rh4ActionStart;							// Sauvergarde action courante
 	int			rh4PauseKey;
-	LPSTR		rh4CurrentFastLoop;
+	LPTSTR		rh4CurrentFastLoop;
 	int			rh4EndOfPause;
 	int		  	rh4EventCountOR;						// Number of the event for OR conditions
 	short		rh4ConditionsFalse;
 	short		rh4MouseWheelDelta;
 	int			rh4OnMouseWheel;
-	LPSTR		rh4PSaveFilename;
+	LPTSTR		rh4PSaveFilename;
 	UINT		rh4MusicHandle;
 	DWORD		rh4MusicFlags;
 	DWORD		rh4MusicLoops;
 	int			rh4LoadCount;
 	short		rh4DemoMode;
-	short		rh4Free4;
+	short		rh4SaveFrame;
 	CDemoRecord* rh4Demo;
-	char		rh4QuitString[52];						// FREE!!!! GREAT!
+	int			rh4SaveFrameCount;
+	double		rh4MvtTimerCoef;
+	CIPhoneJoystick* rh4IPhoneJoystick;
+	CIPhoneAd*	rh4IPhoneAd;
+	char		rh4QuitString[32];						// FREE!!!! GREAT!
+
 
 	DWORD		rh4PickFlags0;							// 00-31
 	DWORD		rh4PickFlags1;							// 31-63
@@ -2659,9 +2839,9 @@ typedef struct tagRH4 {
 
 	short		rh4DroppedFlag;
 	short		rh4NDroppedFiles;
-	LPSTR		rh4DroppedFiles;
+	LPTSTR		rh4DroppedFiles;
 	LPFL		rh4FastLoops;
-	LPSTR		rh4CreationErrorMessages;
+	LPTSTR		rh4CreationErrorMessages;
 	CValue		rh4ExpValue1;							// New V2
 	CValue		rh4ExpValue2;
 
@@ -2689,12 +2869,12 @@ typedef struct tagRH4 {
 	BYTE		rh4CheckDoneInstart;		// Build92 to correct start of frame with fade in
 	BYTE		rh4Free0;
 	mv *		rh4Mv;						// Yves's data
-	DWORD		rh4Free1;					// String buffer position
+	HCURSOR		rh4OldCursor;				// Old cursor for Show / HideMouse in Vitalize! mode
 	headerObject*	rh4_2ndObject;	 		// Collision object address
-	short 		rh4_2ndObjectNumber;        // Number for collisions
+	short 		rh4_2ndObjectNumber;		// Number for collisions
 	short		rh4FirstQuickDisplay;		// Quick-display object list
 	int			rh4WindowDeltaX;			// For scrolling
-	int			rh4WindowDeltaY;               
+	int			rh4WindowDeltaY;			   
 	UINT		rh4TimeOut;					// For time-out!
 	int			rh4MouseXCenter;			// To correct CROSOFT bugs!
 	int			rh4MouseYCenter;			// To correct CROSOFT bugs!
@@ -2710,7 +2890,11 @@ typedef struct tagRH4 {
 	expression*	rh4ExpToken;							// Current position in expressions
 	CValue*		rh4Results[MAX_INTERMEDIATERESULTS];	// Result pile
 	long		rh4Operators[MAX_INTERMEDIATERESULTS];	// Operators pile
-	LPSTR		rh4PTempStrings[MAX_TEMPSTRINGS];		// Temporary string calculation positiion
+	
+	LPTSTR*		rh4PTempStrings;						// Debut zone 256 long
+	int			rh4MaxTempStrings;
+	long		rh4Free4[256-2];						// Free buffer
+
 	int			rh4NCurTempString;						// Pointer on the current string
 	DWORD		rh4FrameRateArray[MAX_FRAMERATE];		// Framerate calculation buffer
 	int			rh4FrameRatePos;						// Position in buffer
@@ -2760,7 +2944,7 @@ typedef struct RunHeader {
 	int			rhNObjects;
 	int			rhMaxObjects;
 	
-	DWORD		rhFree0;			    
+	DWORD		rhFree0;				
 	DWORD		rhFree1;				
 	DWORD		rhFree2;					
 	DWORD		rhFree3;
@@ -2791,7 +2975,7 @@ typedef struct RunHeader {
 	UINT		rhVBLObjet;					// For the objects
 	UINT		rhVBLOld;					// For the counter
 
-	int			free10;						
+	int			rhEventsSize;						
 	WORD		rhMT_VBLStep;   			// Path movement variables
 	WORD 		rhMT_VBLCount;
 	DWORD		rhMT_MoveStep;
@@ -2807,7 +2991,7 @@ typedef struct RunHeader {
 	short		rhFree4;					// Alignment
 	long		rhCurParam[2];
 	short 		rhCurObjectNumber;	 		// Object number
-	short 		rh1stObjectNumber;          // Number, for collisions
+	short 		rh1stObjectNumber;		  // Number, for collisions
 
 	long		rhOiListPtr;				// OI list enumeration
 	short 		rhObListNext;				// Branch label
@@ -2823,8 +3007,8 @@ typedef struct RunHeader {
 	LPDWORD		rhDestroyList;				// Destroy list address
 
 	int			rhDebuggerCommand;			// Current debugger command
-	char		rhDebuggerBuffer[DB_BUFFERSIZE];		// Code transmission buffer
-	char*		rhDbOldHO;
+	char		rhFree13[DB_BUFFERSIZE];		// Buffer libre!
+	LPVOID		rhDbOldHO;
 	WORD		rhDbOldId;
 	WORD		rhFree7;					
 
@@ -2857,7 +3041,7 @@ typedef struct headerObject {
 	short 	hoNextSelected;				// Selected object list!!! DO NOT CHANGE POSITION!!!
 
 	int		hoSize;						// Structure size
-    LPRH	hoAdRunHeader;				// Run-header address
+	LPRH	hoAdRunHeader;				// Run-header address
 #ifdef __cplusplus
 	headerObject* hoAddress;			
 #else
@@ -2877,19 +3061,18 @@ typedef struct headerObject {
 
 	int 	hoMark1;					// #of loop marker for the events
 	int 	hoMark2;
-	char*	hoMT_NodeName;				// Name fo the current node for path movements
+	LPTSTR	hoMT_NodeName;				// Name fo the current node for path movements
 
 	int		hoEventNumber;				// Number of the event called (for extensions)
 	int		hoFree2;
 	LPOC	hoCommon;					// Common structure address
 
-#ifdef HOX_INT
 	union
 	{
 	struct
 		{
 			int  	hoCalculX;					// Low weight value
-			int  	hoX;          	      		// X coordinate
+			int  	hoX;		  		  		// X coordinate
 			int  	hoCalculY;					// Low weight value
 			int  	hoY;						// Y coordinate
 		};
@@ -2899,23 +3082,6 @@ typedef struct headerObject {
 			__int64 hoCalculYLong;
 		};
 	};
-#else
-	union
-	{
-	struct
-		{
-			short 	hoCalculX;					// Low weight value
-			short	hoX;          	      		// X coordinate
-			short	hoCalculY;					// Low weight value
-			short	hoY;						// Y coordinate
-		};
-	struct	
-		{
-			int hoCalculXLong;
-			int hoCalculYLong;
-		};
-	};
-#endif
 	int		hoImgXSpot;					// Hot spot of the current image
 	int		hoImgYSpot;
 	int		hoImgWidth;					// Width of the current picture
@@ -3013,7 +3179,7 @@ typedef struct tagRM {
 		int		MT_XStart;
 		int		MT_YStart;
 		int		MT_Pause;
-		char*	MT_GotoNode;
+		LPTSTR	MT_GotoNode;
 		};
 	struct
 		{
@@ -3023,6 +3189,7 @@ typedef struct tagRM {
 		int	 	MM_FYMouse;
 		int	 	MM_Stopped;
 		int	 	MM_OldSpeed;
+		BYTE	MM_MvOpt;
 		};	
 	struct
 		{
@@ -3032,6 +3199,7 @@ typedef struct tagRM {
 		int	 	MG_Speed;
 		int 	MG_LastBounce;
 		int	 	MG_DirMask;
+		BYTE	MG_MvOpt;
 		};
 	struct
 		{
@@ -3045,6 +3213,7 @@ typedef struct tagRM {
 		int	 	MR_OkReverse;
 		int	 	MR_OldJoy;
 		int 	MR_LastBounce;
+		BYTE	MR_MvOpt;
 		};
 	struct
 		{
@@ -3137,7 +3306,7 @@ typedef struct tagRSPR {
 	int	 		rsCreaFlags;			// Creation flags
 	COLORREF	rsBackColor;			// background saving color
 	DWORD		rsEffect;				// Sprite effects
-	DWORD		rsEffectParam;
+	LPARAM		rsEffectParam;
 	WORD	 	rsFlags;				// Handling flags
 	WORD		rsFadeCreaFlags;		// Saved during a fadein
 	} rSpr;
@@ -3149,6 +3318,7 @@ typedef rSpr *	LPRSP;
 #define			RSFLAG_SCALE_RESAMPLE	0x0008	
 #define			RSFLAG_ROTATE_ANTIA		0x0010
 #define			RSFLAG_VISIBLE			0x0020
+#define			RSFLAG_CREATEDEFFECT	0x0040
 
 
 // ----------------------------------------
@@ -3159,7 +3329,7 @@ typedef struct tagRV {
 	long	rvFree1[VALUES_NUMBEROF_ALTERABLE-1];
 	long	rvValueFlags;
 	BYTE	rvFree2[VALUES_NUMBEROF_ALTERABLE];
-	LPSTR	rvStrings[STRINGS_NUMBEROF_ALTERABLE];
+	LPTSTR	rvStrings[STRINGS_NUMBEROF_ALTERABLE];
 	} rVal;
 typedef rVal *	LPRVAL;
 	
@@ -3179,6 +3349,13 @@ typedef rVal *	LPRVAL;
 // -----------------------------------------------
 // Objects animation and movement structure
 // -----------------------------------------------
+#if !defined(ANGLETYPE)
+#if defined(HWABETA)
+#define ANGLETYPE float
+#else
+#define ANGLETYPE int
+#endif
+#endif
 typedef void (* RCROUTINE)(LPHO);
 typedef struct tagRCOM {
 
@@ -3196,7 +3373,7 @@ typedef struct tagRCOM {
 	int	   	rcImage;					// Current frame
 	float	rcScaleX;					
 	float	rcScaleY;
-	int		rcAngle;
+	ANGLETYPE	rcAngle;
 	int	   	rcDir;						// Current direction
 	int	   	rcSpeed;					// Current speed
 	int	   	rcMinSpeed;					// Minimum speed
@@ -3204,10 +3381,10 @@ typedef struct tagRCOM {
 	BOOL	rcChanged;					// Flag: modified object
 	BOOL	rcCheckCollides;			// For static objects
 
-	int	 	rcOldX;            			// Previous coordinates
+	int	 	rcOldX;						// Previous coordinates
 	int	 	rcOldY;
 	int	 	rcOldImage;
-	int		rcOldAngle;
+	ANGLETYPE		rcOldAngle;
 	int	 	rcOldDir;
 	int	 	rcOldX1;					// For zone detections
 	int	 	rcOldY1;
@@ -3299,8 +3476,8 @@ typedef	struct	tagRs {
 	short			rsOldFrame;			// Counter only 
 	BYTE			rsHidden;
 	BYTE			rsFree;
-	LPSTR			rsTextBuffer;		// Text buffer
-	int				rsLBuffer;			// Length of the buffer
+	LPTSTR			rsTextBuffer;		// Text buffer
+	int				rsLBuffer;			// Length of the buffer in BYTES
 	DWORD			rsFont;				// Temporary font for texts
 	union {
 		COLORREF	rsTextColor;		// Text color
@@ -3341,7 +3518,7 @@ typedef struct objInfoList {
 	int			oilNumOfSelected;		 // Number of selected objects
 	DWORD		oilOEFlags;				 // Object's flags
 	short		oilLimitFlags;			 // Movement limitation flags
-	short		oilLimitList;         	 // Pointer to limitation list
+	short		oilLimitList;		 	 // Pointer to limitation list
 	short		oilOIFlags;				 // Objects preferences
 	short		oilOCFlags2;			 // Objects preferences II
 	long		oilInkEffect;			 // Ink effect
@@ -3349,8 +3526,11 @@ typedef struct objInfoList {
 	HFII		oilHFII;				 // First available frameitem
 	COLORREF 	oilBackColor;			 // Background erasing color
 	short		oilQualifiers[MAX_QUALIFIERS];		// Qualifiers for this object
-	BYTE		oilName[24];	 		// Name	
+	TCHAR		oilName[24];	 		 // Name	
 	int			oilEventCountOR;		 // Selection in a list of events with OR
+#ifdef HWABETA
+	OINUM*		oilColList;				// Liste de collisions sprites
+#endif
 #ifdef __cplusplus
 };
 #else
@@ -3360,6 +3540,7 @@ typedef	objInfoList	*	LPOIL;
 
 #define	OILIMITFLAGS_BORDERS		0x000F
 #define	OILIMITFLAGS_BACKDROPS		0x0010
+#define	OILIMITFLAGS_ONCOLLIDE		0x0080	// used by HWA
 #define	OILIMITFLAGS_QUICKCOL		0x0100
 #define	OILIMITFLAGS_QUICKBACK		0x0200
 #define	OILIMITFLAGS_QUICKBORDER	0x0400
@@ -3480,7 +3661,7 @@ typedef short (WINAPI * CHANGERUNDATA_PROC)(LPHO, LPHO);
 typedef short (WINAPI * KILLBACKGROUND_PROC) (LPHO);
 typedef short (WINAPI * GETZONEINFO_PROC)(LPHO);
 typedef LPWORD (WINAPI * GETDEBUGTREE_PROC)(LPHO);
-typedef void (WINAPI * GETDEBUGITEM_PROC)(LPSTR, LPHO, int);
+typedef void (WINAPI * GETDEBUGITEM_PROC)(LPTSTR, LPHO, int);
 typedef void (WINAPI* EDITDEBUGITEM_PROC)(LPHO, int);
 typedef void (WINAPI* GETRUNOBJECTFONT_PROC)(LPHO, LOGFONT*);
 typedef void (WINAPI* SETRUNOBJECTFONT_PROC)(LPHO, LOGFONT*, RECT*);
@@ -3490,6 +3671,7 @@ typedef short (WINAPI * GETRUNOBJECTWINDOW_PROC)(LPHO);
 typedef sMask* (WINAPI * GETRUNOBJECTCOLLISIONMASK_PROC)(LPHO, LPARAM);
 typedef BOOL (WINAPI * SAVERUNOBJECT_PROC)(LPHO, HANDLE);
 typedef BOOL (WINAPI * LOADRUNOBJECT_PROC)(LPHO, HANDLE);
+typedef void (WINAPI * GETRUNOBJECTMEMORYUSAGE_PROC)(LPHO, int*, int*, int*);
 
 #ifdef __cplusplus
 class kpj {
@@ -3500,13 +3682,13 @@ typedef struct kpj {
 #endif
 	CREATERUNOBJECT_PROC			CreateRunObject;	
 	DESTROYRUNOBJECT_PROC			DestroyRunObject;   
-	HANDLERUNOBJECT_PROC			HandleRunObject;    
+	HANDLERUNOBJECT_PROC			HandleRunObject;	
 	DISPLAYRUNOBJECT_PROC			DisplayRunObject;   
 	GETRUNOBJECTSURFACE_PROC		GetRunObjectSurface;   
-	REINITRUNOBJECT_PROC			ReInitRunObject;    
-	PAUSERUNOBJECT_PROC				PauseRunObject;     
+	REINITRUNOBJECT_PROC			ReInitRunObject;	
+	PAUSERUNOBJECT_PROC				PauseRunObject;	 
 	CONTINUERUNOBJECT_PROC			ContinueRunObject;  
-	PREPARETOSAVE_PROC				PrepareToSave;      
+	PREPARETOSAVE_PROC				PrepareToSave;	  
 	PREPARETOSAVE_PROC				PrepareToSave2; 	
 	GETRUNDATASIZE_PROC				GetRunObjectDataSize;
 	SAVEBACKGROUND_PROC				SaveBackground;		
@@ -3525,6 +3707,8 @@ typedef struct kpj {
 	GETRUNOBJECTCOLLISIONMASK_PROC	GetRunObjectCollisionMask;
 	SAVERUNOBJECT_PROC				SaveRunObject;
 	LOADRUNOBJECT_PROC				LoadRunObject;
+	GETRUNOBJECTMEMORYUSAGE_PROC	GetRunObjectMemoryUsage;
+
 	kpxRunInfos	infos;   
 	
 #ifdef __cplusplus
@@ -3532,7 +3716,7 @@ typedef struct kpj {
 #else
 } kpj;
 #endif
-typedef	kpj	 *      LPKPJ;
+typedef	kpj	 *	  LPKPJ;
 
 #define	KPJ_SHIFT			7
 #define	KPJ_SIZE			0x80
@@ -3572,6 +3756,14 @@ typedef void (*ACTROUTINE)(event* pe);
 typedef void (*EXPROUTINE)();
 typedef void (*CALLOPERATOR_ROUTINE)();
 
+typedef struct tagCallTables
+{
+	CALLCOND1_ROUTINE* pConditions1;
+	CALLCOND2_ROUTINE* pConditions2;
+	CALLACTION_ROUTINE* pActions;
+	CALLEXP_ROUTINE* pExpressions;
+}CallTables;
+
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -3596,7 +3788,7 @@ typedef void (*CALLOPERATOR_ROUTINE)();
 #ifdef	RUN_TIME
 
 	#define OINUM_ERROR				-1
-	#define B2L(a,b,c,d)    ((DWORD)(((DWORD)((unsigned char)(d))<<24)|((DWORD)((unsigned char)(c))<<16)|((DWORD)((unsigned char)(b))<<8)|(DWORD)((unsigned char)(a))))
+	#define B2L(a,b,c,d)	((DWORD)(((DWORD)((unsigned char)(d))<<24)|((DWORD)((unsigned char)(c))<<16)|((DWORD)((unsigned char)(b))<<8)|(DWORD)((unsigned char)(a))))
 	
 	// Pour la routine GetFileInfos
 	#define	FILEINFO_DRIVE			1
@@ -3610,11 +3802,11 @@ typedef void (*CALLOPERATOR_ROUTINE)();
 	// MACRO: returns first param
 	#define		EVTPARAMS(p) 			((LPEVP)(p->evtCode<0 ? (LPBYTE)p+CND_SIZE : (LPBYTE)p+ACT_SIZE ))
 	// MACRO: returns the extension condition code
-	#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)           
+	#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)		   
 	#define		EXTACTIONNUM(i)			((short)(i>>16))
 
 	#define			KPXNAME_SIZE				60
-	#define			BADNAME_SIZE			    (OINAME_SIZE+KPXNAME_SIZE+8)
+	#define			BADNAME_SIZE				(OINAME_SIZE+KPXNAME_SIZE+8)
 
 	// Extensions
 	// ----------
@@ -3727,7 +3919,7 @@ typedef void (*CALLOPERATOR_ROUTINE)();
 #endif;
 
 // Restores structure alignment...
-#ifndef      _H2INC 
+#ifndef	  _H2INC 
 #pragma pack( pop, _pack_cncf_ )
 #endif
 

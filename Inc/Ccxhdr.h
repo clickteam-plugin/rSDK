@@ -54,6 +54,7 @@
 #else
 #include	<assert.h>
 #endif
+#include	<tchar.h>
 
 #if !defined(ASSERT)
 	#ifdef _DEBUG
@@ -106,10 +107,10 @@
 #include	"evtccx.h"
 #include	"Props.h"
 #else
-// #include	"..\..\dll\cnpdll.h"
-// #include	"..\..\runtime\cncr.h"
-// #include	"..\..\events\evtccx.h"
-// #include	"..\inc\props.h"
+#include	"..\..\dll\cnpdll.h"
+#include	"..\..\runtime\cncr.h"
+#include	"..\..\events\evtccx.h"
+#include	"..\inc\props.h"
 #endif
 
 // Other definitions
