@@ -83,12 +83,11 @@ EXPRESSION(
 
 EXPRESSION(
 	/* ID */			1,
-	/* Name */			"product(",
-	/* Flags */			0,
-	/* Params */		(2,EXPPARAM_NUMBER,"First number",EXPPARAM_NUMBER,"Second number")
+	/* Name */			"stringreturn$(",
+	/* Flags */			EXPFLAG_STRING,
+	/* Params */		(1,EXPPARAM_STRING,"String to return")
 ) {
-	int p1=ExParam(TYPE_INT);
-	int p2=ExParam(TYPE_INT);
+	char * p1=(char *)ExParam(TYPE_STRING);
 
-	return p1*p2;
+	ReturnString(p1);
 }

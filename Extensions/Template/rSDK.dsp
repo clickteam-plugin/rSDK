@@ -143,7 +143,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ..\..\lib\mmfs2.lib /nologo /subsystem:windows /dll /incremental:no /debug /machine:IX86 /out:".\Debug\Template.mfx" /pdbtype:sept
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib mmfs2.lib /nologo /subsystem:windows /dll /debug /machine:IX86 /out:".\Debug\Template.mfx" /pdbtype:sept /libpath:"..\..\lib\\"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib mmfs2.lib /nologo /subsystem:windows /dll /debug /machine:IX86 /out:"c:\program files\multimedia fusion developer 2\extensions\rsdk.mfx" /pdbtype:sept /libpath:"..\..\lib\\"
 # SUBTRACT LINK32 /pdb:none /incremental:no
 
 !ELSEIF  "$(CFG)" == "rSDK - Win32 Release"
@@ -834,10 +834,6 @@ SOURCE=..\..\Inc\ImgFlt.h
 # Begin Source File
 
 SOURCE=..\..\Inc\MagicRDATA.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\Inc\MenuIDs.h
 # End Source File
 # Begin Source File
 

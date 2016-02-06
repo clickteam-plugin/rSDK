@@ -917,9 +917,9 @@ void GetCodeTitle(LPEVENTINFOS2 eiPtr, short code, short param, short mn, LPSTR 
 			if(code>=0&&code<(short)Conditions.size()) {
 				if(param>=0&&param<(short)Conditions[code]->getParamCount())
 					#ifdef VISUALSTUDIO_EXPRESS
-						strcpy_s(strBuf,maxLen,Conditions[code]->getParamName(param).c_str());
+						strcpy_s(strBuf,maxLen,Conditions[code]->getParamName(param));
 					#else
-						strcpy(strBuf,Conditions[code]->getParamName(param).c_str());
+						strcpy(strBuf,Conditions[code]->getParamName(param));
 					#endif
 			}
 			break;
@@ -927,9 +927,9 @@ void GetCodeTitle(LPEVENTINFOS2 eiPtr, short code, short param, short mn, LPSTR 
 			if(code>=0&&code<(short)Actions.size()) {
 				if(param>=0&&param<(short)Actions[code]->getParamCount())
 					#ifdef VISUALSTUDIO_EXPRESS
-						strcpy_s(strBuf,maxLen,Actions[code]->getParamName(param).c_str());
+						strcpy_s(strBuf,maxLen,Actions[code]->getParamName(param));
 					#else
-						strcpy(strBuf,Actions[code]->getParamName(param).c_str());
+						strcpy(strBuf,Actions[code]->getParamName(param));
 					#endif
 			}
 			break;
@@ -937,9 +937,9 @@ void GetCodeTitle(LPEVENTINFOS2 eiPtr, short code, short param, short mn, LPSTR 
 			if(code>=0&&code<(short)Expressions.size()) {
 				if(param>=0&&param<(short)Expressions[code]->getParamCount())
 					#ifdef VISUALSTUDIO_EXPRESS
-						strcpy_s(strBuf,maxLen,Expressions[code]->getParamName(param).c_str());
+						strcpy_s(strBuf,maxLen,Expressions[code]->getParamName(param));
 					#else
-						strcpy(strBuf,Expressions[code]->getParamName(param).c_str());
+						strcpy(strBuf,Expressions[code]->getParamName(param));
 					#endif
 			}
 			break;
@@ -1063,9 +1063,9 @@ void WINAPI DLLExport GetConditionString(mv _far *mV, short code, LPSTR strPtr, 
 #ifndef RUN_ONLY
 		if(code>=0&&code<(short)Conditions.size())
 			#ifdef VISUALSTUDIO_EXPRESS
-				strcpy_s(strPtr,maxLen,Conditions[code]->getName().c_str());
+				strcpy_s(strPtr,maxLen,Conditions[code]->getName());
 			#else
-				strcpy(strPtr,Conditions[code]->getName().c_str());
+				strcpy(strPtr,Conditions[code]->getName());
 			#endif
 #endif // !RUN_ONLY
 }
@@ -1075,9 +1075,9 @@ void WINAPI DLLExport GetActionString(mv _far *mV, short code, LPSTR strPtr, sho
 #ifndef RUN_ONLY
 		if(code>=0&&code<(short)Actions.size())
 			#ifdef VISUALSTUDIO_EXPRESS
-				strcpy_s(strPtr,maxLen,Actions[code]->getName().c_str());
+				strcpy_s(strPtr,maxLen,Actions[code]->getName());
 			#else
-				strcpy(strPtr,Actions[code]->getName().c_str());
+				strcpy(strPtr,Actions[code]->getName());
 			#endif
 #endif // !RUN_ONLY
 }
@@ -1087,9 +1087,9 @@ void WINAPI DLLExport GetExpressionString(mv _far *mV, short code, LPSTR strPtr,
 #ifndef RUN_ONLY
 		if(code>=0&&code<(short)Expressions.size())
 			#ifdef VISUALSTUDIO_EXPRESS
-				strcpy_s(strPtr,maxLen,Expressions[code]->getName().c_str());
+				strcpy_s(strPtr,maxLen,Expressions[code]->getName());
 			#else
-				strcpy(strPtr,Expressions[code]->getName().c_str());
+				strcpy(strPtr,Expressions[code]->getName());
 			#endif
 #endif // !RUN_ONLY
 }
@@ -1103,11 +1103,11 @@ void WINAPI DLLExport GetExpressionString(mv _far *mV, short code, LPSTR strPtr,
 void WINAPI DLLExport GetExpressionParam(mv _far *mV, short code, short param, LPSTR strBuf, short maxLen)
 {
 #ifndef RUN_ONLY
-	if(Expressions[code]->getParamName(param).size()!=0)
+	if(strlen(Expressions[code]->getParamName(param)))
 		#ifdef VISUALSTUDIO_EXPRESS
-			strcpy_s(strBuf,maxLen,Expressions[code]->getParamName(param).c_str());
+			strcpy_s(strBuf,maxLen,Expressions[code]->getParamName(param));
 		#else
-			strcpy(strBuf,Expressions[code]->getParamName(param).c_str());
+			strcpy(strBuf,Expressions[code]->getParamName(param));
 		#endif
 	else
 		*strBuf=0;

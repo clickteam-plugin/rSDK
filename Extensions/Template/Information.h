@@ -18,6 +18,9 @@
 // If you register your object with Clickteam, change this to the ID you were given
 #define ObjectRegID			REGID_PRIVATE
 
+// Change N,O,N,E to 4 unique characters (MMF currently still uses this to keep track)
+#define	IDENTIFIER MAKEID(N,O,N,E)
+
 // --------------------
 // Version information
 // --------------------
@@ -41,14 +44,7 @@
 // --------------------
 // Handling priority
 // --------------------
-// If the extension will handle windows messages, specify the priority
+// If this extension will handle windows messages, specify the priority
 // of the handling procedure, 0 = low and 255 = very high
 
 #define	WINDOWPROC_PRIORITY 100
-
-// --------------------
-// Object identifier
-// --------------------
-// Change N,O,N,E to some unique 4 character string if you are subclassing a window
-
-#define	IDENTIFIER MAKEID(N,O,N,E)

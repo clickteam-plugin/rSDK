@@ -24,7 +24,7 @@ headerObject rHo;
 		#endif
 	#endif
 #endif
-#ifdef M_OEFLAG_VALUE
+#ifdef M_OEFLAG_VALUES
 	rVal rv;
 #endif
 

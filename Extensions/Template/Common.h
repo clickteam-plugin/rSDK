@@ -3,16 +3,12 @@
 
 // Send any queries or bug reports to support@aquadasoft.com
 
+// Include guard
 #ifndef COMMON_H
 #define COMMON_H
 
-#if defined(_DEBUG) && defined(WIN32)
-	#define	_CRTDBG_MAP_ALLOC	1
-#endif
-
 // General includes
 #include	"TemplateInc.h"
-#include	"MenuIDs.h"
 
 // Specific to this extension
 #include	"Resource.h"
@@ -34,4 +30,5 @@ extern long (WINAPI ** ExpressionJumps)(LPRDATA rdPtr, long param);
 extern PropData Properties[];
 extern WORD DebugTree[];
 
+// End include guard
 #endif

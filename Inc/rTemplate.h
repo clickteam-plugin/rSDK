@@ -9,6 +9,74 @@
 #pragma message("rSDK will only compile with a C++ compiler")
 #endif
 
+// VC++ only
+#ifndef _MSC_VER
+#pragma message("rSDK will only compile under Microsoft Visual C++")
+#endif
+
+// My dynamic array class, to prevent linking with the MSVC runtime
+template<class T> class rVector {
+protected:
+	T * A;
+	size_t C;
+	size_t M;
+public:
+	
+	// Constructor and destructor
+	inline rVector() { M=3; C=0; A=(T *)malloc(sizeof(T)*M); }
+	~rVector() { free(A); }
+
+	// Copy constructor
+	inline rVector(rVector<T> &O) {
+		C=O.size();
+		M=C+1;
+		A=(T *)malloc(sizeof(T)*M);
+		memcpy(A,O.array(),sizeof(T)*C);
+	}
+
+	// Assignment operator
+	inline operator = (rVector<T> &O) {
+		C=O.size();
+		M=C+1;
+		free(A);
+		A=(T *)malloc(sizeof(T)*M);
+		memcpy(A,O.array(),sizeof(T)*C);
+	}
+
+	// Push an item onto the top of the vector
+	inline void push_back(T O) {
+		if(C>=M) {
+			M=C*3+1;
+			A=(T *)realloc(A,sizeof(T)*M);
+		}
+		A[C]=O;
+		C++;
+	}
+
+	// Pop an item from the top of the vector
+	inline void pop_back() {
+		if(C<(M>>1)) {
+			M>>=1;
+			A=(T *)realloc(A,sizeof(T)*M);
+		}
+		C--;
+	}
+
+	// Get the size of the vector
+	inline size_t size() const { return C; }
+
+	// Get an item at any location in the vector
+	inline T at(size_t I) const { return A[I]; }
+	inline T operator [] (size_t I) const { return A[I]; }
+
+	// Get the last item in the vector
+	inline T back() const { return A[C-1]; }
+
+	// Get a raw pointer to the array
+	inline T * array() const { return A; }
+
+};
+
 // Property macros
 #define PROPS_IDS_START()			enum { PROPID_SETTINGS=PROPID_EXTITEM_CUSTOM_FIRST,	
 #define PROPS_IDS_END()				};
@@ -32,9 +100,9 @@
 #define SEPARATOR					m.AddMenu(-3,"");
 
 // Should be placed globally in some CPP file
-#define EXT_INIT()					vector<ExtFunction*> Conditions; \
-									vector<ExtFunction*> Actions; \
-									vector<ExtFunction*> Expressions; \
+#define EXT_INIT()					rVector<ExtFunction*> Conditions; \
+									rVector<ExtFunction*> Actions; \
+									rVector<ExtFunction*> Expressions; \
 									short * conditionsInfos; \
 									short * actionsInfos; \
 									short * expressionsInfos; \
@@ -47,7 +115,7 @@
 #define ACTION_COUNT				Actions.size()
 #define EXPRESSION_COUNT			Expressions.size()
 
-// Safe variable macro- use in macros that need to declare variables to avoid any conflict
+// Safe variable macro- use in macros that need to declare variables to avoid any conflict (what a hack)
 #define SVAR(s)						_SAFE__##s##_
 
 // Macros to return different types
@@ -66,8 +134,8 @@
 									return long(SVAR(2))
 
 // Macros to get parameters
-#define ExParam(type)				rdPtr->rRd->GetExpressionParameter(param1,type)
-#define Param(type)					rdPtr->rRd->GetParameter(param1,type)
+#define ExParam(type)				rdPtr->rRd->GetExpressionParameter((short)param1,type)
+#define Param(type)					rdPtr->rRd->GetParameter((short)param1,type)
 
 // Copy something from edPtr to rdPtr (if it is copiable and has the same name on both sides)
 #define CopyToRd(s)					rdPtr->s=edPtr->s
@@ -94,7 +162,7 @@
 // To generate an identifier
 #define MAKEID(a,b,c,d)				((#@a<<24)|(#@b<<16)|(#@c<<8)|(#@d)) 
 
-// MMF information macros
+// The build of MMF
 #define MMF_BUILD (mV->mvGetVersion()&MMFBUILD_MASK)
 
 // Common include
@@ -108,39 +176,63 @@ typedef long (WINAPI DLLExport * LPEXPRESSION)(LPRDATA,long);
 // Class to hold a list of parameters (thanks turbo)
 class param_list {
 public:
+
+	// The constructor fills up the vectors with the given parameters
 	param_list(size_t count,...) {
+
+		// Variable argument list
 		va_list list;
+
+		// Start going through the arguments
 		va_start(list,count);
+
+		// This is twice the number of parameters given
 		int count_dbl=count*2;
-		for(size_t i=0;i<count_dbl;i++) {
+
+		// Loop through all the arguments
+		for(int i=0;i<count_dbl;i++) {
+
+			// If the argument is odd
 			if(i%2==0)
+
+				// It must be a type; push it onto the types vector
 				Type.push_back(va_arg(list,short));
+
+			// If the argument is even
 			else
+
+				// It must be a name; push it onto the names vector
 				Name.push_back(va_arg(list,const char *));
 		}
+
+		// Stop going through the arguments
 		va_end(list);
 	}
-	vector<short> Type;
-	vector<string> Name;
+
+	// This will hold the type of each argument
+	rVector<short> Type;
+
+	// This will hold the name of each argument
+	rVector<const char *> Name;
 };
 
 // Temporary declaration of the ExtFunction class
 class ExtFunction;
 
 // Extern declarations of the condition, action and expression vectors
-extern vector<ExtFunction*> Conditions;
-extern vector<ExtFunction*> Actions;
-extern vector<ExtFunction*> Expressions;
+extern rVector<ExtFunction*> Conditions;
+extern rVector<ExtFunction*> Actions;
+extern rVector<ExtFunction*> Expressions;
 
 // This class holds an action, condition or expression
 class ExtFunction {
 protected:
 
 	// A vector to hold the types of the parameters
-	vector<short> ParamTypes;
+	rVector<short> ParamTypes;
 
 	// A vector to hold the names of the parameters
-	vector<string> ParamStrings;
+	rVector<const char *> ParamStrings;
 
 	// Pointers to conditions, actions and expressions- we have them all but don't use them all
 	LPCONDITION mCondition;
@@ -148,7 +240,7 @@ protected:
 	LPEXPRESSION mExpression;
 
 	// The name of the function
-	string Name;
+	const char * Name;
 
 	// The flags
 	short Flags;
@@ -156,7 +248,7 @@ protected:
 public:
 
 	// The first constructor overload, for a condition
-	ExtFunction(LPCONDITION con,short flags,const string &name,param_list params) {
+	ExtFunction(LPCONDITION con,short flags,const char * name,param_list params) {
 
 		// Set the condition pointer
 		mCondition=con;
@@ -174,7 +266,7 @@ public:
 	}
 
 	// Constructor overload for an action
-	ExtFunction(LPACTION act,short flags,const string &name,param_list params) {
+	ExtFunction(LPACTION act,short flags,const char * name,param_list params) {
 
 		// Set the action pointer
 		mAction=act;
@@ -192,7 +284,7 @@ public:
 	}
 
 	// Constructor overload for an expression
-	ExtFunction(LPEXPRESSION exp,short flags,const string &name,param_list params) {
+	ExtFunction(LPEXPRESSION exp,short flags,const char * name,param_list params) {
 
 		// Set the expression pointer
 		mExpression=exp;
@@ -213,14 +305,14 @@ public:
 	inline LPCONDITION		getCondition()			{ return mCondition; }
 	inline LPACTION			getAction()				{ return mAction; }
 	inline LPEXPRESSION		getExpression()			{ return mExpression; }
-	inline string&			getName()				{ return Name; }
+	inline const char *		getName()				{ return Name; }
 	inline size_t			getParamCount()			{ return ParamTypes.size(); }
 	inline short			getParamType(size_t i)	{ return ParamTypes[i]; }
-	inline string			getParamName(size_t i)	{ return ParamStrings[i]; }
+	inline const char *		getParamName(size_t i)	{ return ParamStrings[i]; }
 	inline short			getFlags()				{ return Flags; }
 };
 
-// Macros for declaring an action, condition or expression
+// Macro for a condition in main.cpp
 #define CONDITION(num, name, flags, params) \
 	long WINAPI DLLExport ConditionFunc##num(LPRDATA rdPtr, long param1, long param2); \
 	long IConditionFunc##num(LPRDATA rdPtr, long param1, long param2); \
@@ -228,6 +320,8 @@ public:
 	long WINAPI DLLExport ConditionFunc##num(LPRDATA rdPtr, long param1, long param2) { \
 	return IConditionFunc##num(rdPtr,param1,param2); \
 	} long IConditionFunc##num(LPRDATA rdPtr,long param1,long param2)
+
+// Macro for an action in main.cpp
 #define ACTION(num, name, flags, params) \
 	short WINAPI DLLExport ActionFunc##num(LPRDATA rdPtr, long param1, long param2); \
 	void IActionFunc##num(LPRDATA rdPtr, long param1, long param2); \
@@ -235,6 +329,8 @@ public:
 	short WINAPI DLLExport ActionFunc##num(LPRDATA rdPtr, long param1, long param2) { \
 	IActionFunc##num(rdPtr,param1,param2); return 0; \
 	} void IActionFunc##num(LPRDATA rdPtr,long param1, long param2)
+
+// Macro for an expression in main.cpp
 #define EXPRESSION(num, name, flags, params) \
 	long WINAPI DLLExport ExpressionFunc##num(LPRDATA rdPtr, long param1); \
 	long IExpressionFunc##num(LPRDATA rdPtr, long param1); \
@@ -252,15 +348,17 @@ const int SubMenu=-1;
 const int MenuItem=-2;
 const int Separator=-3;
 
-// Class to hold a menu
-
 #ifndef RUN_ONLY
+
+	// Class to hold a menu
 	class Menu {
 	private:
 		HMENU RootMenu;
-		vector<HMENU> SubMenus;
-		vector<const char *> SubMenuNames;
+		rVector<HMENU> SubMenus;
+		rVector<const char *> SubMenuNames;
 	public:
+
+		// The constructor creates a root menu and pushes it onto the submenu vector
 		Menu() {
 			RootMenu=CreateMenu();
 			SubMenus.push_back(RootMenu);
@@ -378,7 +476,7 @@ public:
 		case TYPE_FLOAT:
 			long tmpf=CNC_GetFloatParameter(rdPtr);
 			float param=*(float*)&tmpf;
-			return param;
+			return (long)param;
 		};
 	}
 

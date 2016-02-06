@@ -38,6 +38,6 @@
 
 	ITEM(0,"Sum of")
 	SEPARATOR
-	ITEM(1,"Product of")
+	ITEM(1,"Return a string")
 
 #endif
