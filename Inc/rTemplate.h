@@ -340,8 +340,11 @@ public:
 	long IExpressionFunc##num(LPRDATA, long); \
 	ExtFunction ExpressionClass##num((LPEXPRESSION)ExpressionFunc##num, flags, name, param_list##params); \
 	long WINAPI DLLExport ExpressionFunc##num(LPRDATA rdPtr, long param1) { \
+	long (* cur)(LPRDATA rdPtr,short param1,long type) = rdPtr->rRd->P_GetExpressionParameter; \
 	rdPtr->rRd->P_GetExpressionParameter=G_GetFirstExpressionParameter; \
-	return IExpressionFunc##num(rdPtr,param1); \
+	long ret = IExpressionFunc##num(rdPtr,param1); \
+	rdPtr->rRd->P_GetExpressionParameter = cur; \
+	return ret; \
 	} inline long IExpressionFunc##num(LPRDATA rdPtr,long param1)
 
 // Include oop_ext.h (the code from TurboTemplate)
